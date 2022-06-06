@@ -11,38 +11,51 @@ smogonCalcDataScript.id = "calc-script";
 smogonCalcDataScript.textContent = smogonCalcData;
 (document.head).appendChild(smogonCalcDataScript);
 
-// Inject script to read pokedata from app object
-// calculate and console log
 
+// The funny thing is, with Chrome extensions, you don't have access to 
+// JavaScript variables on the page. So we have to do something a little sloppy
+// - we inject the calculation script to get access to the Pokemon on the field,
+// run the calculation
 function calculate() {
-    let damageCalculation = `let myPkmn = app.curRoom.battle.mySide.active[0];
-    let theirPkmn = app.curRoom.battle.farSide.active[0];
-    let gen = calc.Generations.get(7);
+    let previouslyInjectedScript = document.getElementById("damage-calculation-script");
+    if (previouslyInjectedScript) previouslyInjectedScript.remove();
 
-    let myPkmnObj = new calc.Pokemon(gen, myPkmn.name,{
+    let damageCalculation = `myPkmn = app.curRoom.battle.mySide.active[0];
+    theirPkmn = app.curRoom.battle.farSide.active[0];
+    gen = calc.Generations.get(7);
+
+    myPkmnObj = new calc.Pokemon(gen, myPkmn.name,{
         item: myPkmn.item,
         nature: "Hardy",
         ability: "${getAbility()}",
+        boosts: myPkmn.boosts,
         item: myPkmn.item,
         level: myPkmn.level,
         evs: { hp: 84, atk: 84, def: 84, spa: 84, spd: 84, spe: 84 },
         ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
     })
-
-    let theirPkmnObj = new calc.Pokemon(gen, theirPkmn.name,{
+    theirPkmnObj = new calc.Pokemon(gen, theirPkmn.name,{
         item: theirPkmn.item,
         nature: "Hardy",
         ability: theirPkmn.ability,
         level: theirPkmn.level,
+        boosts: theirPkmn.boosts,
         item: theirPkmn.item,
         evs: { hp: 84, atk: 84, def: 84, spa: 84, spd: 84, spe: 84 },
         ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
     })
-
-    console.log(calc.calculate(gen, myPkmnObj, theirPkmnObj, new calc.Move(gen, "Wild Charge")))`;
+    for (let move of ${getMyMoves()}) {
+        result = calc.calculate(gen, myPkmnObj, theirPkmnObj, new calc.Move(gen, move));
+        oppHP = result.defender.stats.hp;
+        minDamage = Math.floor(result.range()[0] * 1000 / oppHP) / 10;
+        maxDamage = Math.floor(result.range()[1] * 1000 / oppHP) / 10;
+        console.log(move + " does " + minDamage + "% - " + maxDamage + "%");
+    }`;
     var damageCalculationScript = document.createElement("script");
+    damageCalculationScript.id = "damage-calculation-script";
     damageCalculationScript.textContent = damageCalculation;
     (document.head).appendChild(damageCalculationScript);
+    return true;
 }
 
 function getAbility() {
@@ -90,7 +103,16 @@ function checkIfNewTurn() {
         console.log("It is now turn " + numberOfTurns + ".");
         currentTurn = numberOfTurns;
         retryIfFail(calculate, 500, 0);
-
     }
 }
+
 setInterval(checkIfNewTurn, 1000);
+
+function getMyMoves() {
+    var myMoveEls = $('button[name="chooseMove"]');
+    var myMoves = "[";
+    for (var i = 0; i < myMoveEls.length; i++) {
+        myMoves += "'" + $(myMoveEls[i]).attr('data-move') + "',";
+    }
+    return myMoves + "]";
+}

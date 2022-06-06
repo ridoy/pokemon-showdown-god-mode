@@ -5,11 +5,6 @@ var p2Team = [];
 const evs = { hp: 84, atk: 84, def: 84, spa: 84, spd: 84, spe: 84 };
 const ivs = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
 const gen = calc.Generations.get(7);
-
-console.log(calc);
-console.log(calc.Generations);
-console.log(calc.Generations.get);
-console.log(calc.Generations.get(7));
 // Inject calc
 // Inject script to read pokedata from app object
 // calculate and console log
