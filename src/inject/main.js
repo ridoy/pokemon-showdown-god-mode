@@ -12,13 +12,52 @@ smogonCalcDataScript.textContent = smogonCalcData;
 (document.head).appendChild(smogonCalcDataScript);
 
 
-// The funny thing is, with Chrome extensions, you don't have access to 
-// JavaScript variables on the page. So we have to do something a little sloppy
-// - we inject the calculation script to get access to the Pokemon on the field,
-// run the calculation
-function calculate() {
+// Chrome extensions run in a separate scope from the current page. Therefore, you can't access
+// any variables in the page's environment, like `app` which contains the game state.
+// The workaround is to inject our code as a string in a new <script> element. It's sloppy but the
+// only alternative I see is scraping this information from the DOM (in which I am uninterested).
+function calculateDamageBothSides() {
+
+    // Where I left off
+    // Perhaps https://github.com/smogon/pokemon-showdown/blob/d09e2d83549f57fa183b34945e4ae7676d1dc21a/data/formats-data.ts
+    // Read random battle sets from this file (and figure otu the right gen too? how doe sthat work?)
+    // 
     let previouslyInjectedScript = document.getElementById("damage-calculation-script");
     if (previouslyInjectedScript) previouslyInjectedScript.remove();
+    let chatbox = $('.battle-log-add .textbox')[1];
+    chatbox.value = "/randbats Raikou"; // TODO change
+    let ev = new KeyboardEvent('keydown', {altKey:false,
+      bubbles: true,
+      cancelBubble: false,
+      cancelable: true,
+      charCode: 0,
+      code: "Enter",
+      composed: true,
+      ctrlKey: false,
+      currentTarget: null,
+      defaultPrevented: true,
+      detail: 0,
+      eventPhase: 0,
+      isComposing: false,
+      isTrusted: true,
+      key: "Enter",
+      keyCode: 13,
+      location: 0,
+      metaKey: false,
+      repeat: false,
+      returnValue: false,
+      shiftKey: false,
+      type: "keydown",
+      which: 13});
+    chatbox.dispatchEvent(ev);
+    let opponentMoves = [];
+    let moveEls = $($(".infobox").slice(-1)).find("a");
+    if (!moveEls) { return false; }
+    if ($(".infobox").slice(-1).find("span")[0].innerText.indexOf("Raikou") === -1) {
+        return false; // Will trigger retry
+    }
+    moveEls.each((i) => opponentMoves.push(moveEls[i].text));
+    opponentMoves = stringArrayToString(opponentMoves);
 
     let damageCalculation = `myPkmn = app.curRoom.battle.mySide.active[0];
     theirPkmn = app.curRoom.battle.farSide.active[0];
@@ -49,6 +88,13 @@ function calculate() {
         oppHP = result.defender.stats.hp;
         minDamage = Math.floor(result.range()[0] * 1000 / oppHP) / 10;
         maxDamage = Math.floor(result.range()[1] * 1000 / oppHP) / 10;
+        console.log(move + " does " + minDamage + "% - " + maxDamage + "%");
+    }
+    for (let move of ${opponentMoves}) {
+        result = calc.calculate(gen, theirPkmnObj, myPkmnObj, new calc.Move(gen, move));
+        myHP = result.defender.stats.hp;
+        minDamage = Math.floor(result.range()[0] * 1000 / myHP) / 10;
+        maxDamage = Math.floor(result.range()[1] * 1000 / myHP) / 10;
         console.log(move + " does " + minDamage + "% - " + maxDamage + "%");
     }`;
     var damageCalculationScript = document.createElement("script");
@@ -94,25 +140,34 @@ function stripLabel(text) {
         if (!success) retryIfFail(func, interval, i + 1);
     }, interval);
 }
+
+// TODO reset currentTurn when battle is over or tab is closed.
 var currentTurn = $('h2.battle-history').length;
 
 function checkIfNewTurn() {
-    var numberOfTurns = $('h2.battle-history').length;
+    let numberOfTurns = $('h2.battle-history').length;
 
     if (numberOfTurns > currentTurn) {
         console.log("It is now turn " + numberOfTurns + ".");
         currentTurn = numberOfTurns;
-        retryIfFail(calculate, 500, 0);
+        retryIfFail(calculateDamageBothSides, 500, 0);
     }
 }
-
-setInterval(checkIfNewTurn, 1000);
 
 function getMyMoves() {
-    var myMoveEls = $('button[name="chooseMove"]');
-    var myMoves = "[";
-    for (var i = 0; i < myMoveEls.length; i++) {
-        myMoves += "'" + $(myMoveEls[i]).attr('data-move') + "',";
-    }
-    return myMoves + "]";
+    let myMoveEls = $('button[name="chooseMove"]');
+    let myMoves = myMoveEls.toArray().map((el) => $(el).attr('data-move'));
+    return stringArrayToString(myMoves);
 }
+
+// String array to string
+function stringArrayToString(arr) {
+    let str = "[";
+    for (var i = 0; i < arr.length; i++) {
+        str += "'" + arr[i] + "',";
+    }
+    return str + "]";
+}
+
+// It all starts here 
+setInterval(checkIfNewTurn, 1000);

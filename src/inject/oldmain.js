@@ -53,16 +53,17 @@ function calculateStrongestMoveEachSide() {
         evs: evs,
         ivs: ivs  
     });
-    var moveEls = $($('.infobox').slice(-1)).find("a");
-    if (!moveEls) { return false; }
-    if ($('.infobox').slice(-1).find('span')[0].innerText.indexOf(pkmn['theirPkmn']['name']) === -1) {
-        return false;
-    }
+
     var opponentMoves = [];
     var myMoveEls = $('button[name="chooseMove"]');
     var myMoves = [];
     for (var i = 0; i < myMoveEls.length; i++) {
         myMoves.push($(myMoveEls[i]).attr('data-move'));
+    }
+    var moveEls = $($('.infobox').slice(-1)).find("a");
+    if (!moveEls) { return false; }
+    if ($('.infobox').slice(-1).find('span')[0].innerText.indexOf(pkmn['theirPkmn']['name']) === -1) {
+        return false;
     }
     moveEls.each((i) => opponentMoves.push(moveEls[i].text));
     var maxHP = myPkmn.maxHP()
