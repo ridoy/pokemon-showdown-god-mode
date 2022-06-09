@@ -23,10 +23,14 @@
       "matches": [
         "https://play.pokemonshowdown.com/*"
       ],
+      "css": [
+        "css/style.css"
+      ],
       "js": [
         "js/data/production.min.js",
         "js/jquery-2.1.4.min.js",
         "src/inject/calc.js",
+        "src/inject/gen7formatsdata.js",
         "src/inject/main.js"
       ]
     }

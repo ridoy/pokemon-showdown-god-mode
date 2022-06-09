@@ -1,16 +1,43 @@
 console.log("Script loaded");
 // Inject calc
 
-var smogonCalcScript = document.createElement("script");
-smogonCalcScript.id = "data-script";
-smogonCalcScript.textContent = smogonCalc;
-(document.head).appendChild(smogonCalcScript);
+function embedScript(scriptAsString, id) {
+    let s = document.createElement("script");
+    s.id = id;
+    s.textContent = scriptAsString;
+    (document.head).appendChild(s);
+}
 
-var smogonCalcDataScript = document.createElement("script");
-smogonCalcDataScript.id = "calc-script";
-smogonCalcDataScript.textContent = smogonCalcData;
-(document.head).appendChild(smogonCalcDataScript);
+embedScript(smogonCalcData, "data-script");
+embedScript(smogonCalc, "calc-script");
+embedScript(gen7FormatsData, "randbats-moves");
 
+function pressEnterEvent() {
+    return new KeyboardEvent('keydown', {altKey:false,
+        bubbles: true,
+        cancelBubble: false,
+        cancelable: true,
+        charCode: 0,
+        code: "Enter",
+        composed: true,
+        ctrlKey: false,
+        currentTarget: null,
+        defaultPrevented: true,
+        detail: 0,
+        eventPhase: 0,
+        isComposing: false,
+        isTrusted: true,
+        key: "Enter",
+        keyCode: 13,
+        location: 0,
+        metaKey: false,
+        repeat: false,
+        returnValue: false,
+        shiftKey: false,
+        type: "keydown",
+        which: 13
+    });
+}
 
 // Chrome extensions run in a separate scope from the current page. Therefore, you can't access
 // any variables in the page's environment, like `app` which contains the game state.
@@ -21,49 +48,17 @@ function calculateDamageBothSides() {
     // Where I left off
     // Perhaps https://github.com/smogon/pokemon-showdown/blob/d09e2d83549f57fa183b34945e4ae7676d1dc21a/data/formats-data.ts
     // Read random battle sets from this file (and figure otu the right gen too? how doe sthat work?)
-    // 
+    // TODO figure out other gens
     let previouslyInjectedScript = document.getElementById("damage-calculation-script");
     if (previouslyInjectedScript) previouslyInjectedScript.remove();
-    let chatbox = $('.battle-log-add .textbox')[1];
-    chatbox.value = "/randbats Raikou"; // TODO change
-    let ev = new KeyboardEvent('keydown', {altKey:false,
-      bubbles: true,
-      cancelBubble: false,
-      cancelable: true,
-      charCode: 0,
-      code: "Enter",
-      composed: true,
-      ctrlKey: false,
-      currentTarget: null,
-      defaultPrevented: true,
-      detail: 0,
-      eventPhase: 0,
-      isComposing: false,
-      isTrusted: true,
-      key: "Enter",
-      keyCode: 13,
-      location: 0,
-      metaKey: false,
-      repeat: false,
-      returnValue: false,
-      shiftKey: false,
-      type: "keydown",
-      which: 13});
-    chatbox.dispatchEvent(ev);
-    let opponentMoves = [];
-    let moveEls = $($(".infobox").slice(-1)).find("a");
-    if (!moveEls) { return false; }
-    if ($(".infobox").slice(-1).find("span")[0].innerText.indexOf("Raikou") === -1) {
-        return false; // Will trigger retry
-    }
-    moveEls.each((i) => opponentMoves.push(moveEls[i].text));
-    opponentMoves = stringArrayToString(opponentMoves);
 
-    let damageCalculation = `myPkmn = app.curRoom.battle.mySide.active[0];
+    let damageCalculation = `
+    myPkmn = app.curRoom.battle.mySide.active[0];
     theirPkmn = app.curRoom.battle.farSide.active[0];
     gen = calc.Generations.get(7);
+    opponentMoves = gen7FormatsData[theirPkmn.speciesForme.replaceAll("-","").toLowerCase()]["randomBattleMoves"];
 
-    myPkmnObj = new calc.Pokemon(gen, myPkmn.name,{
+    myPkmnObj = new calc.Pokemon(gen, myPkmn.speciesForme,{
         item: myPkmn.item,
         nature: "Hardy",
         ability: "${getAbility()}",
@@ -73,7 +68,7 @@ function calculateDamageBothSides() {
         evs: { hp: 84, atk: 84, def: 84, spa: 84, spd: 84, spe: 84 },
         ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
     })
-    theirPkmnObj = new calc.Pokemon(gen, theirPkmn.name,{
+    theirPkmnObj = new calc.Pokemon(gen, theirPkmn.speciesForme,{
         item: theirPkmn.item,
         nature: "Hardy",
         ability: theirPkmn.ability,
@@ -83,24 +78,37 @@ function calculateDamageBothSides() {
         evs: { hp: 84, atk: 84, def: 84, spa: 84, spd: 84, spe: 84 },
         ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
     })
+    yourDamageText = ["Your moves:"];
+    oppDamageText = ["Their moves:"];
     for (let move of ${getMyMoves()}) {
         result = calc.calculate(gen, myPkmnObj, theirPkmnObj, new calc.Move(gen, move));
         oppHP = result.defender.stats.hp;
         minDamage = Math.floor(result.range()[0] * 1000 / oppHP) / 10;
         maxDamage = Math.floor(result.range()[1] * 1000 / oppHP) / 10;
-        console.log(move + " does " + minDamage + "% - " + maxDamage + "%");
+        yourDamageText.push(move + ": " + minDamage + "% - " + maxDamage + "%");
     }
-    for (let move of ${opponentMoves}) {
+    for (let move of opponentMoves) {
         result = calc.calculate(gen, theirPkmnObj, myPkmnObj, new calc.Move(gen, move));
         myHP = result.defender.stats.hp;
         minDamage = Math.floor(result.range()[0] * 1000 / myHP) / 10;
         maxDamage = Math.floor(result.range()[1] * 1000 / myHP) / 10;
-        console.log(move + " does " + minDamage + "% - " + maxDamage + "%");
-    }`;
-    var damageCalculationScript = document.createElement("script");
-    damageCalculationScript.id = "damage-calculation-script";
-    damageCalculationScript.textContent = damageCalculation;
-    (document.head).appendChild(damageCalculationScript);
+        oppDamageText.push(move + ": " + minDamage + "% - " + maxDamage + "%");
+    }
+    if (!document.getElementById("damage-display")) {
+        damageDisplay = document.createElement("div");
+        damageDisplayLeft = document.createElement("div");
+        damageDisplayRight = document.createElement("div");
+        damageDisplay.id = "damage-display";
+        damageDisplayLeft.id = "damage-display-left";
+        damageDisplayRight.id = "damage-display-right";
+        damageDisplay.appendChild(damageDisplayLeft);
+        damageDisplay.appendChild(damageDisplayRight);
+    }
+    damageDisplayLeft.innerText = yourDamageText.join("\\n");
+    damageDisplayRight.innerText = oppDamageText.join("\\n");
+    document.getElementsByClassName("controls")[0].appendChild(damageDisplay);
+    `;
+    embedScript(damageCalculation, "damage-calculation-script");
     return true;
 }
 

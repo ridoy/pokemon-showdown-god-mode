@@ -1,0 +1,5 @@
+#damage-display-left, #damage-display-right {
+    vertical-align: top;
+    padding: 4px;
+    display: inline-block;
+}
