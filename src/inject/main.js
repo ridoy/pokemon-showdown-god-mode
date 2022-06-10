@@ -52,11 +52,12 @@ function calculateDamageBothSides() {
     let previouslyInjectedScript = document.getElementById("damage-calculation-script");
     if (previouslyInjectedScript) previouslyInjectedScript.remove();
 
+    // TODO we can obtain our moves of all 6 pokemon and switch movesets based on active pokemon, instead of scraping the moveset of active pokemon from DOM
     let damageCalculation = `
     myPkmn = app.curRoom.battle.mySide.active[0];
     theirPkmn = app.curRoom.battle.farSide.active[0];
     gen = calc.Generations.get(7);
-    opponentMoves = gen7FormatsData[theirPkmn.speciesForme.replaceAll("-","").toLowerCase()]["randomBattleMoves"];
+    opponentMoves = gen7FormatsData[theirPkmn.speciesForme.replaceAll("-","").replaceAll(" ", "").toLowerCase()]["randomBattleMoves"];
 
     myPkmnObj = new calc.Pokemon(gen, myPkmn.speciesForme,{
         item: myPkmn.item,
