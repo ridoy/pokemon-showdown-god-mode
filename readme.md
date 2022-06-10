@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://github.com/ridoy/ps_godmode/blob/main/alphademo.png" height="500px">
+  </p>
+
 Not quite yet ready for public usage. Only works for Generation 7 Random Battles so far.
 
 # Checklist
