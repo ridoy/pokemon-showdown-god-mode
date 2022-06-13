@@ -8,16 +8,7 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "background": {
-    "page": "src/bg/background.html",
-    "persistent": true
-  },
   "default_locale": "en",
-  "page_action": {
-    "default_icon": "icons/icon19.png",
-    "default_title": "page action demo",
-    "default_popup": "src/page_action/page_action.html"
-  },
   "content_scripts": [
     {
       "matches": [
@@ -27,10 +18,9 @@
         "css/style.css"
       ],
       "js": [
-        "js/data/production.min.js",
         "js/jquery-2.1.4.min.js",
-        "src/inject/calc.js",
-        "src/inject/gen7formatsdata.js",
+        "src/inject/calc/calc.js",
+        "src/inject/data/gen7formatsdata.min.js",
         "src/inject/main.js"
       ]
     }
