@@ -16,7 +16,7 @@ function DamageCalculator() {
             oppHP = result.defender.stats.hp;
             minDamage = Math.floor(result.range()[0] * 1000 / oppHP) / 10;
             maxDamage = Math.floor(result.range()[1] * 1000 / oppHP) / 10;
-            damages.push(move + ": " + minDamage + "% - " + maxDamage + "%");
+            damages.push({moveName: move, minDamage: minDamage, maxDamage: maxDamage});
         }
         return damages;
     }
@@ -37,54 +37,112 @@ function DamageCalculator() {
     };
     this.displayDamages = function(yourDamages, theirDamages) {
         try {
+            console.log(yourDamages);
             let previouslyInjectedDisplay = document.getElementById("damage-display");
             if (previouslyInjectedDisplay) previouslyInjectedDisplay.remove();
         
-            let damageDisplay = document.createElement("div");
-            damageDisplayLeft = document.createElement("div");
-            damageDisplayRight = document.createElement("div");
-            damageDisplay.id = "damage-display";
-            damageDisplayLeft.id = "damage-display-left";
-            damageDisplayRight.id = "damage-display-right";
-            damageDisplay.appendChild(damageDisplayLeft);
-            damageDisplay.appendChild(damageDisplayRight);
-            damageDisplayLeft.innerText = "Your moves:\n" + yourDamages.join("\n");
-            damageDisplayRight.innerText = "Their (possible) moves:\n" + theirDamages.join("\n");
-            document.getElementsByClassName("controls")[0].appendChild(damageDisplay);
+            let damageDisplayContainer = document.createElement("div");
+            let myDamageDisplay = document.createElement("div");
+            let theirDamageDisplay = document.createElement("div");
+            damageDisplayContainer.id = "damage-display-container";
+            myDamageDisplay.id = "damage-display";
+            theirDamageDisplay.id = "damage-display";
+            // Display your damages on their Pokemon
+            for (let pkmnName of Object.keys(yourDamages)) {
+                let moves = yourDamages[pkmnName];
+                maxDamage = Math.max.apply(null, moves.map(move => move.maxDamage));               
+                let damageDisplayItem = document.createElement("div");
+                damageDisplayItem.className += "my-damage-display-item";
+                damageDisplayItem.innerHTML = `<b>${pkmnName}</b>`;
+                for (let move of moves) {
+                    if (move.maxDamage === maxDamage) {
+                        damageDisplayItem.innerHTML += `<br/><b>${move.moveName}<br/><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span></b>`;
+                    } else {
+                        damageDisplayItem.innerHTML += `<br/>${move.moveName}<br/><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span>`;
+                    }
+                }
+                myDamageDisplay.appendChild(damageDisplayItem);
+            }
+            // Display their damages on your Pokemon
+            let theirMoves = theirDamages[Object.keys(theirDamages)[0]];
+            let theirMovesDisplay = document.createElement("div");
+            theirMovesDisplay.className += "their-damage-display-item";
+            for (let move of theirMoves) {
+                theirMovesDisplay.innerHTML += `<br/>${move.moveName}`;
+            }
+            theirDamageDisplay.appendChild(theirMovesDisplay);
+            for (let pkmnName of Object.keys(theirDamages)) {
+                let moves = theirDamages[pkmnName];
+                console.log(moves);
+                maxDamage = Math.max.apply(null, moves.map(move => move.maxDamage));               
+                let damageDisplayItem = document.createElement("div");
+                damageDisplayItem.className += "their-damage-display-item";
+                damageDisplayItem.innerHTML = `<b>${pkmnName}</b>`;
+                for (let move of moves) {
+                    if (move.maxDamage === maxDamage) {
+                        damageDisplayItem.innerHTML += `<br/><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span></b>`;
+                    } else {
+                        damageDisplayItem.innerHTML += `<br/><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span>`;
+                    }
+                }
+                theirDamageDisplay.appendChild(damageDisplayItem);  
+            }
+
+            let myDamageLabel = document.createElement("span");
+            let theirDamageLabel = document.createElement("span");
+            myDamageLabel.innerHTML = "Your moves and damages (strongest moves are bolded):";
+            theirDamageLabel.innerHTML = "<br/>Their (potential) moves and damages:";
+            damageDisplayContainer.appendChild(myDamageLabel);
+            damageDisplayContainer.appendChild(myDamageDisplay);
+            damageDisplayContainer.appendChild(theirDamageLabel);
+            damageDisplayContainer.appendChild(theirDamageDisplay);
+            document.getElementsByClassName("controls")[0].appendChild(damageDisplayContainer);
             return true;
         } catch (e) {
             console.log(e);
         }
     };
-    this.retryIfFail = function(func, interval, i) {
-       if (!i) i = 0;
-       if (i > 5) {
-           return; // 5 is max retries for now
+    this.retryIfFail = function(func, interval, attempt) {
+       if (!attempt) attempt = 0;
+       if (attempt > 5) {
+           return;
        }
        setTimeout(function() {
            var success = func();
-           if (!success) retryIfFail(func, interval, i + 1);
+           if (!success) retryIfFail(func, interval, attempt + 1);
        }, interval);
-   } 
-    // where I left off: weird bug where script does not read team initially. 
+    } 
     this.run = function() {
         let gen = $this.getGeneration();
+        if (!app || !app.curRoom || !app.curRoom.battle || !app.curRoom.battle.myPokemon) {
+            setTimeout($this.run, 1000);
+            return;
+        }
         let myPkmnName = app.curRoom.battle.mySide.active[0].speciesForme;
-        let myBoosts = app.curRoom.battle.mySide.active[0].boosts;
         let myTeam = app.curRoom.battle.myPokemon;
         let myPkmn = myTeam.filter((pkmn) => pkmn.speciesForme === myPkmnName)[0];
-        myPkmn.boosts = myBoosts;
+        myPkmn.boosts = app.curRoom.battle.mySide.active[0].boosts;
+        let myOtherPkmn = myTeam.filter((pkmn) => pkmn.speciesForme !== myPkmnName);
         let theirPkmn = app.curRoom.battle.farSide.active[0];
         let theirPkmnNameFormatted = theirPkmn
             .speciesForme
             .replaceAll("-","")
             .replaceAll(" ", "")
+            .replaceAll(":", "") // Type: Null
+            .replaceAll("%", "") // Zygarde-10%
             .toLowerCase();
         let theirMoves = gen7FormatsData[theirPkmnNameFormatted]["randomBattleMoves"];
         let myPkmnObj = $this.initPokemon(gen, myPkmn);
         let theirPkmnObj = $this.initPokemon(gen, theirPkmn);
-        let yourDamages = $this.calculateDamages(gen, myPkmn.moves, myPkmnObj, theirPkmnObj);
-        let theirDamages = $this.calculateDamages(gen, theirMoves, theirPkmnObj, myPkmnObj);
+        let yourDamages = {};
+        let theirDamages = {};
+        yourDamages[myPkmnName] = $this.calculateDamages(gen, myPkmn.moves, myPkmnObj, theirPkmnObj);
+        theirDamages[myPkmnName] = $this.calculateDamages(gen, theirMoves, theirPkmnObj, myPkmnObj);
+        for (let i = 0; i < myOtherPkmn.length; i++) {
+            let pkmn = $this.initPokemon(gen,myOtherPkmn[i]);
+            yourDamages[pkmn.name] = $this.calculateDamages(gen, myOtherPkmn[i].moves, pkmn, theirPkmnObj);
+            theirDamages[pkmn.name] = $this.calculateDamages(gen, theirMoves, theirPkmnObj, pkmn);
+        }
         $this.retryIfFail($this.displayDamages.bind($this, yourDamages, theirDamages), 1000);
     }
 }
