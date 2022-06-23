@@ -36,8 +36,9 @@ function DamageCalculator() {
         return calc.Generations.get(7);
     };
     this.displayDamages = function(yourDamages, theirDamages) {
+        // TODO clean this mess up
+        // TODO refactoring ideas. Class def in separate files (display, constants (class names), damage calc, main)
         try {
-            console.log(yourDamages);
             let previouslyInjectedDisplay = document.getElementById("damage-display");
             if (previouslyInjectedDisplay) previouslyInjectedDisplay.remove();
         
@@ -45,14 +46,14 @@ function DamageCalculator() {
             let myDamageDisplay = document.createElement("div");
             let theirDamageDisplay = document.createElement("div");
             damageDisplayContainer.id = "damage-display-container";
-            myDamageDisplay.id = "damage-display";
-            theirDamageDisplay.id = "damage-display";
+            myDamageDisplay.className += "damage-display";
+            theirDamageDisplay.className += "damage-display";
             // Display your damages on their Pokemon
             for (let pkmnName of Object.keys(yourDamages)) {
                 let moves = yourDamages[pkmnName];
                 maxDamage = Math.max.apply(null, moves.map(move => move.maxDamage));               
                 let damageDisplayItem = document.createElement("div");
-                damageDisplayItem.className += "my-damage-display-item";
+                damageDisplayItem.className += "my-damage-display-item damage-display-item";
                 damageDisplayItem.innerHTML = `<b>${pkmnName}</b>`;
                 for (let move of moves) {
                     if (move.maxDamage === maxDamage) {
@@ -66,9 +67,9 @@ function DamageCalculator() {
             // Display their damages on your Pokemon
             let theirMoves = theirDamages[Object.keys(theirDamages)[0]];
             let theirMovesDisplay = document.createElement("div");
-            theirMovesDisplay.className += "their-damage-display-item";
+            theirMovesDisplay.className += "their-damage-display-item damage-display-item";
             for (let move of theirMoves) {
-                theirMovesDisplay.innerHTML += `<br/>${move.moveName}`;
+                theirMovesDisplay.innerHTML += `<br/><b>${move.moveName}</b>`;
             }
             theirDamageDisplay.appendChild(theirMovesDisplay);
             for (let pkmnName of Object.keys(theirDamages)) {
@@ -76,11 +77,11 @@ function DamageCalculator() {
                 console.log(moves);
                 maxDamage = Math.max.apply(null, moves.map(move => move.maxDamage));               
                 let damageDisplayItem = document.createElement("div");
-                damageDisplayItem.className += "their-damage-display-item";
+                damageDisplayItem.className += "their-damage-display-item damage-display-item";
                 damageDisplayItem.innerHTML = `<b>${pkmnName}</b>`;
                 for (let move of moves) {
                     if (move.maxDamage === maxDamage) {
-                        damageDisplayItem.innerHTML += `<br/><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span></b>`;
+                        damageDisplayItem.innerHTML += `<br/><b><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span></b>`;
                     } else {
                         damageDisplayItem.innerHTML += `<br/><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span>`;
                     }

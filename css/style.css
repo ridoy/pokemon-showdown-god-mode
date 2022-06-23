@@ -1,13 +1,12 @@
 .my-damage-display-item {
-    vertical-align: top;
     width: 102px;
-    font-size: 10px;
-    margin-right: 4px;
-    display: inline-block;
 }
 
 .their-damage-display-item {
     width: 86px;
+}
+
+.damage-display-item {
     display: inline-block;
     vertical-align: top;
     margin-right: 4px;
