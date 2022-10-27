@@ -21,6 +21,7 @@
         "js/jquery-2.1.4.min.js",
         "src/inject/calc/calc.js",
         "src/inject/data/gen7formatsdata.min.js",
+        "src/inject/damage-calculator.js",
         "src/inject/main.js"
       ]
     }
