@@ -97,7 +97,22 @@ function DamageCalculator() {
             damageDisplayContainer.appendChild(myDamageDisplay);
             damageDisplayContainer.appendChild(theirDamageLabel);
             damageDisplayContainer.appendChild(theirDamageDisplay);
-            document.getElementsByClassName("controls")[0].appendChild(damageDisplayContainer);
+            // document.getElementsByClassName("controls")[0].appendChild(damageDisplayContainer);
+            damageDisplaySlideout = document.createElement("div");
+            damageDisplaySlideout.id = "damage-display-slideout";
+            damageDisplayCollapseButton = document.createElement("button");
+            damageDisplayCollapseButton.innerText = "Collapse";
+            damageDisplaySlideout.appendChild(damageDisplayCollapseButton);
+            damageDisplaySlideout.appendChild(damageDisplayContainer);
+            damageDisplayCollapseButton.addEventListener('click', function() {
+                this.classList.toggle("active");
+                if (damageDisplayContainer.style.display === "block") {
+                    damageDisplayContainer.style.display = "none";
+                } else {
+                    damageDisplayContainer.style.display = "block";
+                }
+            });
+            document.body.appendChild(damageDisplaySlideout);
             return true;
         } catch (e) {
             console.log(e);

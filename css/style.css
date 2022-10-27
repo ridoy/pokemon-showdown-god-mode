@@ -18,6 +18,14 @@
     margin-top: 20px;
 }
 
+#damage-display-slideout {
+    width: 100%;
+    background: #fefefe;
+    color: black;
+    bottom: 0;
+    position: fixed;
+}
+
 .damage-amount {
     float: right;
 }
