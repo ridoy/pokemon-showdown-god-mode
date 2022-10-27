@@ -97,11 +97,11 @@ function DamageCalculator() {
             damageDisplayContainer.appendChild(myDamageDisplay);
             damageDisplayContainer.appendChild(theirDamageLabel);
             damageDisplayContainer.appendChild(theirDamageDisplay);
-            // document.getElementsByClassName("controls")[0].appendChild(damageDisplayContainer);
             damageDisplaySlideout = document.createElement("div");
             damageDisplaySlideout.id = "damage-display-slideout";
-            damageDisplayCollapseButton = document.createElement("button");
-            damageDisplayCollapseButton.innerText = "Collapse";
+            damageDisplayCollapseButton = document.createElement("span");
+            damageDisplayCollapseButton.innerText = "Collapse / Expand [x] ";
+            damageDisplayCollapseButton.id = "collapse-button";
             damageDisplaySlideout.appendChild(damageDisplayCollapseButton);
             damageDisplaySlideout.appendChild(damageDisplayContainer);
             damageDisplayCollapseButton.addEventListener('click', function() {
