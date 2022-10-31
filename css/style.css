@@ -19,7 +19,7 @@
     width: 100%;
     background: #777;
     color: white;
-    cursor: pointer;
+    cursor: grab;
     padding: 5px;
     text-align: center;
 }
