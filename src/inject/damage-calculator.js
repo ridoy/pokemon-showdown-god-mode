@@ -44,12 +44,12 @@ function DamageCalculator() {
         return calc.Generations.get(7);
     };
 
-    // Generate HTML element containing useful damage info to be displayed
-    // @param {Object[Array]} pkmnToDamages - mapping of Pokémon to damages either received or dealt
+    // Append damage ranges to an HTML element.
+    // @param {Object[Object]} pkmnToDamages - mapping of Pokémon to damages either received or dealt
     // @param {String} className - Class name of individual damage display elements
     // @param {Node} parentElement - HTML element to which the string created by this function is appended
     // @param {Boolean} isEnemy - Don't show move in UI if isEnemy is true (in current design)
-    function createDamageDisplay(pkmnToDamages, className, parentElement, isEnemy) {
+    function appendRangesToDamageDisplay(pkmnToDamages, className, parentElement, isEnemy) {
         // isEnemy param to have slightly different UIs is kind of sloppy
         for (let pkmnName of Object.keys(pkmnToDamages)) {
             let moves = pkmnToDamages[pkmnName];
@@ -70,20 +70,19 @@ function DamageCalculator() {
     }
 
     // Display damage info of this turn in page.
-    // @param {Array[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
-    // @param {Array[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
+    // @param {Object[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
+    // @param {Object[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
     // @return {boolean} True if execution completes successfully.
     function displayDamages(yourDamages, theirDamages) {
         // TODO constants in constants.js
         try {
             $('#damage-display-container').remove(); // Clear canvas for new data
-        
             let damageDisplayContainer = $('<div />').attr("id", "damage-display-container");
+
             let myDamageDisplay = $('<div />').attr("class", "damage-display");
-            let myDamageLabel = $('<span/>')
-                .html("Your moves and damages (strongest moves are bolded):")
+            let myDamageLabel = $('<span/>').html("Your moves and damages (strongest moves are bolded):")
                 .appendTo(damageDisplayContainer);
-            createDamageDisplay(yourDamages, "my-damage-display-item", myDamageDisplay, false);
+            appendRangesToDamageDisplay(yourDamages, "my-damage-display-item", myDamageDisplay, false);
             $(myDamageDisplay).appendTo(damageDisplayContainer);
 
             // With the current UI, your opponent's damages table has their active pokemon's moves in the
@@ -95,9 +94,9 @@ function DamageCalculator() {
                 .attr("class", "their-damage-display-item damage-display-item")
                 .html(theirMoveNamesColumn)
                 .appendTo(theirDamageDisplay);
-            createDamageDisplay(theirDamages, "their-damage-display-item", theirDamageDisplay, true);
+            appendRangesToDamageDisplay(theirDamages, "their-damage-display-item", theirDamageDisplay, true);
             let theirDamageLabel = $('<span/>')
-                .html("<br/>Their (potential) moves and damages:")
+                .html("<br/>Their (potential) moves and damages (actual damages may be higher/lower depending on enemy's held item):")
                 .appendTo(damageDisplayContainer);
             $(theirDamageDisplay).appendTo(damageDisplayContainer);
 
@@ -130,21 +129,18 @@ function DamageCalculator() {
             setTimeout(run, 1000);
             return;
         }
-        let myPkmnName = app.curRoom.battle.mySide.active[0].speciesForme;
-        let myTeam = app.curRoom.battle.myPokemon;
+        let battle = app.curRoom.battle;
+        let myPkmnName = battle.mySide.active[0].speciesForme;
+        let myTeam = battle.myPokemon;
         let myPkmn = myTeam.filter((pkmn) => pkmn.speciesForme === myPkmnName)[0];
         let myOtherPkmn = myTeam.filter((pkmn) => pkmn.speciesForme !== myPkmnName);
-        myPkmn.boosts = app.curRoom.battle.mySide.active[0].boosts;
-        let theirPkmn = app.curRoom.battle.farSide.active[0];
-        let theirPkmnNameFormatted = theirPkmn
-            .speciesForme
-            .replaceAll("-","")
-            .replaceAll(" ", "")
-            .replaceAll(":", "") // Type: Null
-            .replaceAll("%", "") // Zygarde-10%
-            .toLowerCase();
-        let theirMoves = gen7FormatsData[theirPkmnNameFormatted]["randomBattleMoves"];
+        myPkmn.boosts = battle.mySide.active[0].boosts;
+        let theirPkmn = battle.farSide.active[0];
+        let theirPkmnSpeciesFormeId = battle.dex.species.get(theirPkmn.speciesForme).id;
+        let theirPkmnBaseFormeId = battle.dex.species.get(theirPkmn.name).id;
+        let theirMoves = gen7FormatsData[theirPkmnSpeciesFormeId]["randomBattleMoves"] || gen7FormatsData[theirPkmnBaseFormeId]["randomBattleMoves"];
         let myPkmnObj = initPokemon(gen, myPkmn);
+        theirPkmn.speciesForme = theirPkmnSpeciesFormeId;
         let theirPkmnObj = initPokemon(gen, theirPkmn);
         let yourDamages = {};
         let theirDamages = {};

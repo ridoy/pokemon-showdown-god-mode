@@ -11,6 +11,8 @@
     vertical-align: top;
     margin-right: 4px;
     font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 #collapse-button {
