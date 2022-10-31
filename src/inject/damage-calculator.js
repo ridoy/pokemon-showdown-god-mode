@@ -1,19 +1,31 @@
 // Damage calculation object. This is embedded as a <script> into the page so we can access local variables like
-// `app` which contains the game state. This cannot be accessed otherwise: Chrome extensions work in a separate
+// `app` which contains the game state. `app` cannot be accessed otherwise: Chrome extensions work in a separate
 // scope from the page.
 function DamageCalculator() {
     let $this = this;
+
+    // Calculate damage ranges of each move of an attacker on a defender
+    // @param {Generation} gen - Generation of current battle
+    // @param {Move[]} moves - List of attacker's 4 moves
+    // @param {Pokemon} attacker - Attacking Pokémon
+    // @param {Pokemon} defender - Defending Pokémon
+    // @return {Array[Object]} Damage ranges of each of attacker's moves
     this.calculateDamages = function(gen, moves, attacker, defender) {
-        let damages = [];
-        for (let move of moves) {
-            result = calc.calculate(gen, attacker, defender, new calc.Move(gen, move));
-            oppHP = result.defender.stats.hp;
-            minDamage = Math.floor(result.range()[0] * 1000 / oppHP) / 10;
-            maxDamage = Math.floor(result.range()[1] * 1000 / oppHP) / 10;
-            damages.push({moveName: move, minDamage: minDamage, maxDamage: maxDamage});
-        }
-        return damages;
+        return moves.map((move) => {
+            let result = calc.calculate(gen, attacker, defender, new calc.Move(gen, move));
+            let oppHP = result.defender.stats.hp;
+            return {
+                moveName: move,
+                minDamage: Math.floor(result.range()[0] * 1000 / oppHP) / 10,
+                maxDamage: Math.floor(result.range()[1] * 1000 / oppHP) / 10
+            };
+        });
     }
+
+    // Initialize a Pokémon object given a generation and Pokémon name.
+    // @param {Generation} gen - Generation of current battle
+    // @param {String} pkmn - Name of Pokémon
+    // @return {Pokemon} Pokemon object.
     this.initPokemon = function(gen, pkmn) {
         return new calc.Pokemon(gen, pkmn.speciesForme, {
             item: pkmn.item,
@@ -26,9 +38,16 @@ function DamageCalculator() {
             ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
         })            
     };
+ 
+    // Get generation of current battle.
     this.getGeneration = function() { // TODO add support for other generations
         return calc.Generations.get(7);
     };
+
+    // Display damage info of this turn in page.
+    // @param {Array[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
+    // @param {Array[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
+    // @return {boolean} True if execution completes successfully.
     this.displayDamages = function(yourDamages, theirDamages) {
         // TODO clean this mess up
         // TODO refactoring ideas. Class def in separate files (display, constants (class names), damage calc, main)
@@ -98,6 +117,11 @@ function DamageCalculator() {
             console.log(e);
         }
     };
+
+    // Generic failure retry function
+    // @param {Function} func - Function to be attempted
+    // @param {Number} interval - milliseconds between attempts
+    // @param {Number} attempt - Current attempt number 
     this.retryIfFail = function(func, interval, attempt) {
        if (!attempt) attempt = 0;
        if (attempt > 5) {
@@ -109,6 +133,7 @@ function DamageCalculator() {
        }, interval);
     }
 
+    // Entry point of DamageCalculator 
     this.run = function() {
         let gen = $this.getGeneration();
         if (!app || !app.curRoom || !app.curRoom.battle || !app.curRoom.battle.myPokemon) {
