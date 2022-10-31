@@ -4668,17 +4668,4 @@ const gen7FormatsData = {
 
 // iterate
 
-//gen7FormatsData = JSON.parse(gen7FormatsData);
-for (let key of Object.keys(gen7FormatsData)) {
-	console.log(gen7FormatsData[key]);
-	console.log(key);
-	if (!gen7FormatsData[key]["randomBattleMoves"]) {
-		delete gen7FormatsData[key];
-	} else {
-		delete gen7FormatsData[key]["randomDoubleBattleMoves"];
-		delete gen7FormatsData[key]["tier"];
-		delete gen7FormatsData[key]["doublesTier"];
-	}
-}
-
-fs.writeFileSync('swag.js', JSON.stringify(gen7FormatsData));
+fs.writeFileSync('gen7formatsdata.min.js', JSON.stringify(gen7FormatsData));
