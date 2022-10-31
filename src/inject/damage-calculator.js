@@ -10,7 +10,7 @@ function DamageCalculator() {
     // @param {Pokemon} attacker - Attacking Pokémon
     // @param {Pokemon} defender - Defending Pokémon
     // @return {Array[Object]} Damage ranges of each of attacker's moves
-    this.calculateDamages = function(gen, moves, attacker, defender) {
+    function calculateDamages(gen, moves, attacker, defender) {
         return moves.map((move) => {
             let result = calc.calculate(gen, attacker, defender, new calc.Move(gen, move));
             let oppHP = result.defender.stats.hp;
@@ -26,7 +26,7 @@ function DamageCalculator() {
     // @param {Generation} gen - Generation of current battle
     // @param {String} pkmn - Name of Pokémon
     // @return {Pokemon} Pokemon object.
-    this.initPokemon = function(gen, pkmn) {
+    function initPokemon(gen, pkmn) {
         return new calc.Pokemon(gen, pkmn.speciesForme, {
             item: pkmn.item,
             ability: pkmn.ability,
@@ -40,78 +40,68 @@ function DamageCalculator() {
     };
  
     // Get generation of current battle.
-    this.getGeneration = function() { // TODO add support for other generations
+    function getGeneration() { // TODO add support for other generations
         return calc.Generations.get(7);
     };
+
+    // Generate HTML element containing useful damage info to be displayed
+    // @param {Object[Array]} pkmnToDamages - mapping of Pokémon to damages either received or dealt
+    // @param {String} className - Class name of individual damage display elements
+    // @param {Node} parentElement - HTML element to which the string created by this function is appended
+    // @param {Boolean} isEnemy - Don't show move in UI if isEnemy is true (in current design)
+    function createDamageDisplay(pkmnToDamages, className, parentElement, isEnemy) {
+        // isEnemy param to have slightly different UIs is kind of sloppy
+        for (let pkmnName of Object.keys(pkmnToDamages)) {
+            let moves = pkmnToDamages[pkmnName];
+            let maxDamage = Math.max.apply(null, moves.map(move => move.maxDamage));               
+            let thisPkmnDamagesString = `<b>${pkmnName}</b>`;
+            for (let move of moves) {
+                let isMaxDamage = move.maxDamage === maxDamage;
+                thisPkmnDamagesString += `<br/>
+                    ${(isMaxDamage) ? '<b>' : ''}
+                    ${(isEnemy) ? '' : move.moveName + '<br/>'}
+                    <span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span>
+                    ${(isMaxDamage) ? '</b>' : ''}`
+            }
+            let damageDisplayItem = $("<div/>", {
+                "class": `${className} damage-display-item`
+            }).html(thisPkmnDamagesString).appendTo(parentElement);
+        }
+    }
 
     // Display damage info of this turn in page.
     // @param {Array[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
     // @param {Array[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
     // @return {boolean} True if execution completes successfully.
-    this.displayDamages = function(yourDamages, theirDamages) {
-        // TODO clean this mess up
-        // TODO refactoring ideas. Class def in separate files (display, constants (class names), damage calc, main)
+    function displayDamages(yourDamages, theirDamages) {
+        // TODO constants in constants.js
         try {
-            let previouslyInjectedDisplay = document.getElementById("damage-display-container");
-            if (previouslyInjectedDisplay) previouslyInjectedDisplay.remove();
+            $('#damage-display-container').remove(); // Clear canvas for new data
         
-            let damageDisplayContainer = document.createElement("div");
-            damageDisplayContainer.id = "damage-display-container";
-            let myDamageDisplay = document.createElement("div");
-            let theirDamageDisplay = document.createElement("div");
-            myDamageDisplay.className += "damage-display";
-            theirDamageDisplay.className += "damage-display";
-            // Display your damages on their Pokemon
-            for (let pkmnName of Object.keys(yourDamages)) {
-                let moves = yourDamages[pkmnName];
-                maxDamage = Math.max.apply(null, moves.map(move => move.maxDamage));               
-                let damageDisplayItem = document.createElement("div");
-                damageDisplayItem.className += "my-damage-display-item damage-display-item";
-                damageDisplayItem.innerHTML = `<b>${pkmnName}</b>`;
-                for (let move of moves) {
-                    if (move.maxDamage === maxDamage) {
-                        damageDisplayItem.innerHTML += `<br/><b>${move.moveName}<br/><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span></b>`;
-                    } else {
-                        damageDisplayItem.innerHTML += `<br/>${move.moveName}<br/><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span>`;
-                    }
-                }
-                myDamageDisplay.appendChild(damageDisplayItem);
-            }
-            // Display their damages on your Pokemon
+            let damageDisplayContainer = $('<div />').attr("id", "damage-display-container");
+            let myDamageDisplay = $('<div />').attr("class", "damage-display");
+            let myDamageLabel = $('<span/>')
+                .html("Your moves and damages (strongest moves are bolded):")
+                .appendTo(damageDisplayContainer);
+            createDamageDisplay(yourDamages, "my-damage-display-item", myDamageDisplay, false);
+            $(myDamageDisplay).appendTo(damageDisplayContainer);
+
+            // With the current UI, your opponent's damages table has their active pokemon's moves in the
+            // first column, so we generate that first
+            let theirDamageDisplay = $('<div />').attr("class", "damage-display");
             let theirMoves = theirDamages[Object.keys(theirDamages)[0]];
-            let theirMovesDisplay = document.createElement("div");
-            theirMovesDisplay.className += "their-damage-display-item damage-display-item";
-            for (let move of theirMoves) {
-                theirMovesDisplay.innerHTML += `<br/><b>${move.moveName}</b>`;
-            }
-            theirDamageDisplay.appendChild(theirMovesDisplay);
-            for (let pkmnName of Object.keys(theirDamages)) {
-                let moves = theirDamages[pkmnName];
-                console.log(moves);
-                maxDamage = Math.max.apply(null, moves.map(move => move.maxDamage));               
-                let damageDisplayItem = document.createElement("div");
-                damageDisplayItem.className += "their-damage-display-item damage-display-item";
-                damageDisplayItem.innerHTML = `<b>${pkmnName}</b>`;
-                for (let move of moves) {
-                    if (move.maxDamage === maxDamage) {
-                        damageDisplayItem.innerHTML += `<br/><b><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span></b>`;
-                    } else {
-                        damageDisplayItem.innerHTML += `<br/><span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span>`;
-                    }
-                }
-                theirDamageDisplay.appendChild(damageDisplayItem);  
-            }
+            let theirMoveNamesColumn = theirMoves.reduce((prev,curr) => `${prev}<br/><b>${curr.moveName}</b>`, '');
+            let theirMovesDisplay = $("<div/>")
+                .attr("class", "their-damage-display-item damage-display-item")
+                .html(theirMoveNamesColumn)
+                .appendTo(theirDamageDisplay);
+            createDamageDisplay(theirDamages, "their-damage-display-item", theirDamageDisplay, true);
+            let theirDamageLabel = $('<span/>')
+                .html("<br/>Their (potential) moves and damages:")
+                .appendTo(damageDisplayContainer);
+            $(theirDamageDisplay).appendTo(damageDisplayContainer);
 
-            let myDamageLabel = document.createElement("span");
-            let theirDamageLabel = document.createElement("span");
-            myDamageLabel.innerHTML = "Your moves and damages (strongest moves are bolded):";
-            theirDamageLabel.innerHTML = "<br/>Their (potential) moves and damages:";
-            damageDisplayContainer.appendChild(myDamageLabel);
-            damageDisplayContainer.appendChild(myDamageDisplay);
-            damageDisplayContainer.appendChild(theirDamageLabel);
-            damageDisplayContainer.appendChild(theirDamageDisplay);
-
-            document.getElementById("damage-display-slideout").appendChild(damageDisplayContainer);
+            damageDisplayContainer.appendTo("#damage-display-slideout")
             return true;
         } catch (e) {
             console.log(e);
@@ -122,7 +112,7 @@ function DamageCalculator() {
     // @param {Function} func - Function to be attempted
     // @param {Number} interval - milliseconds between attempts
     // @param {Number} attempt - Current attempt number 
-    this.retryIfFail = function(func, interval, attempt) {
+    function retryIfFail(func, interval, attempt) {
        if (!attempt) attempt = 0;
        if (attempt > 5) {
            return;
@@ -134,17 +124,17 @@ function DamageCalculator() {
     }
 
     // Entry point of DamageCalculator 
-    this.run = function() {
-        let gen = $this.getGeneration();
+    function run() {
+        let gen = getGeneration();
         if (!app || !app.curRoom || !app.curRoom.battle || !app.curRoom.battle.myPokemon) {
-            setTimeout($this.run, 1000);
+            setTimeout(run, 1000);
             return;
         }
         let myPkmnName = app.curRoom.battle.mySide.active[0].speciesForme;
         let myTeam = app.curRoom.battle.myPokemon;
         let myPkmn = myTeam.filter((pkmn) => pkmn.speciesForme === myPkmnName)[0];
-        myPkmn.boosts = app.curRoom.battle.mySide.active[0].boosts;
         let myOtherPkmn = myTeam.filter((pkmn) => pkmn.speciesForme !== myPkmnName);
+        myPkmn.boosts = app.curRoom.battle.mySide.active[0].boosts;
         let theirPkmn = app.curRoom.battle.farSide.active[0];
         let theirPkmnNameFormatted = theirPkmn
             .speciesForme
@@ -154,17 +144,21 @@ function DamageCalculator() {
             .replaceAll("%", "") // Zygarde-10%
             .toLowerCase();
         let theirMoves = gen7FormatsData[theirPkmnNameFormatted]["randomBattleMoves"];
-        let myPkmnObj = $this.initPokemon(gen, myPkmn);
-        let theirPkmnObj = $this.initPokemon(gen, theirPkmn);
+        let myPkmnObj = initPokemon(gen, myPkmn);
+        let theirPkmnObj = initPokemon(gen, theirPkmn);
         let yourDamages = {};
         let theirDamages = {};
-        yourDamages[myPkmnName] = $this.calculateDamages(gen, myPkmn.moves, myPkmnObj, theirPkmnObj);
-        theirDamages[myPkmnName] = $this.calculateDamages(gen, theirMoves, theirPkmnObj, myPkmnObj);
+        yourDamages[myPkmnName] = calculateDamages(gen, myPkmn.moves, myPkmnObj, theirPkmnObj);
+        theirDamages[myPkmnName] = calculateDamages(gen, theirMoves, theirPkmnObj, myPkmnObj);
         for (let i = 0; i < myOtherPkmn.length; i++) {
-            let pkmn = $this.initPokemon(gen,myOtherPkmn[i]);
-            yourDamages[pkmn.name] = $this.calculateDamages(gen, myOtherPkmn[i].moves, pkmn, theirPkmnObj);
-            theirDamages[pkmn.name] = $this.calculateDamages(gen, theirMoves, theirPkmnObj, pkmn);
+            let pkmn = initPokemon(gen,myOtherPkmn[i]);
+            yourDamages[pkmn.name] = calculateDamages(gen, myOtherPkmn[i].moves, pkmn, theirPkmnObj);
+            theirDamages[pkmn.name] = calculateDamages(gen, theirMoves, theirPkmnObj, pkmn);
         }
-        $this.retryIfFail($this.displayDamages.bind($this, yourDamages, theirDamages), 1000);
+        retryIfFail(displayDamages.bind($this, yourDamages, theirDamages), 1000);
     }
+
+    return {
+        run: run
+    };
 }
