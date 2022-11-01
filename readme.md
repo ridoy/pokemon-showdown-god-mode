@@ -32,14 +32,20 @@ F5 Add support for other generations and game modes
 
 B2 include Z moves in calculations
 
-B3 Slideout messes up when battle starts
+~~B3 Slideout messes up when battle starts~~
 
 B4 Hidden Power and Return is serialized as hiddenpower{type}60 and return102 respectively. Thus damage is calculated as 0.
 
-B5 Refresh is required for every new battle
+~~B5 Refresh is required for every new battle~~
+
+B6 Sometimes calculations aren't totally accurate and I don't know why.
+
+B7 Aegislash bug ?
 
 ## Maintenance
 
 M1 Why am I not using any jquery lol
 
 ~~M2 Clean up damage calculation since that is where the majority of the action happens~~
+
+M3 Automated testing.
