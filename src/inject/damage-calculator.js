@@ -100,7 +100,7 @@ function DamageCalculator() {
                 .appendTo(damageDisplayContainer);
             $(theirDamageDisplay).appendTo(damageDisplayContainer);
 
-            damageDisplayContainer.appendTo("#damage-display-slideout")
+            damageDisplayContainer.appendTo("#damage-display-slideout");
             return true;
         } catch (e) {
             console.log(e);
@@ -129,6 +129,7 @@ function DamageCalculator() {
             setTimeout(run, 1000);
             return;
         }
+        
         let battle = app.curRoom.battle;
         let myPkmnName = battle.mySide.active[0].speciesForme;
         let myTeam = battle.myPokemon;

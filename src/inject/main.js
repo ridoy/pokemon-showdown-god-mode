@@ -43,27 +43,48 @@ const createSlideoutContainer = function() {
 
 createSlideoutContainer();
 
-// Executed each turn. `DamageCalculator` is embedded into the page and cannot be called from here,
-// So we embed the call to `run()` as a <script> each turn.
-function calculateDamageBothSides() {
-    let previouslyInjectedScript = document.getElementById("damage-calculator-execution-script");
-    if (previouslyInjectedScript) previouslyInjectedScript.remove();
 
-    let damageCalculatorExecutionScript = "damageCalculator.run()"
-    embedScript(damageCalculatorExecutionScript, "damage-calculator-execution-script");
-    return true;
-}
 
-// Periodically check the current turn by scraping chat history. If new turn, recalculate.
-function checkIfNewTurn() {
-    let numberOfTurns = $('h2.battle-history').length;
+function TurnChecker() {
 
-    if (numberOfTurns > currentTurn) {
-        console.log("It is now turn " + numberOfTurns + ".");
-        currentTurn = numberOfTurns;
-        calculateDamageBothSides();
+// Keep track of ids of current games in map of ids to game turn numbers.
+// Refresh data when tab is changed, ergo continually check app.curRoom
+//  
+    let gamesToNumTurns = {};
+    let activeGameId = null;
+
+    // Periodically check the current turn in the current game. If new turn, recalculate.
+    function checkIfNewTurn() {
+        if (!app.curRoom.battle) {
+            activeGameId = null;
+            $('#damage-display-container').remove();
+            return;
+        }
+        // Tab switching
+        if (app.curRoom.battle.id != activeGameId) {
+            activeGameId = app.curRoom.battle.id;
+            damageCalculator.run();
+        }
+        // If new game was added since we last checked, add it to our watchlist
+        for (let room of app.roomList) {
+            if (!gamesToNumTurns[room.id]) gamesToNumTurns[room.id] = 0;
+        }
+        // TODO removing games
+        if (app.curRoom.battle.turn > gamesToNumTurns[app.curRoom.battle.id]) {
+            gamesToNumTurns[app.curRoom.battle.id] = app.curRoom.battle.turn;
+            damageCalculator.run();
+        }
     }
+
+    function init() {
+        setInterval(checkIfNewTurn, 1000);
+    }
+
+    return {
+        init: init
+    };
 }
+
 
 // Helper function for embedding scripts into the page.
 function embedScript(scriptAsString, id) {
@@ -72,6 +93,7 @@ function embedScript(scriptAsString, id) {
     s.textContent = scriptAsString;
     (document.head).appendChild(s);
 }
+
 
 console.log("Script loaded");
 
@@ -84,11 +106,5 @@ embedScript(gen7FormatsData, "randbats-moves");
 let damageCalculatorInitScript = "let damageCalculator = new DamageCalculator();"
 embedScript(DamageCalculator.toString() + damageCalculatorInitScript, "damage-calculator-script");
 
-// Redisplay damage calculations if move is canceled
-// document.querySelector(".button[name='undoChoice']").addEventListener("click", calculateDamageBothSides);
-
-// TODO reset currentTurn when battle is over or tab is closed.
-let currentTurn = $('h2.battle-history').length;
-
-// Execution begins here.
-setInterval(checkIfNewTurn, 1000);
+let turnCheckerInitScript = "let turnChecker = new TurnChecker(); turnChecker.init();"
+embedScript(TurnChecker.toString() + turnCheckerInitScript, "turn-checker-script");
