@@ -18,31 +18,36 @@
 #collapse-button {
     margin: 0 auto;
     display: block;
-    width: 100%;
-    background: #777;
+    background: #333;
     color: white;
     cursor: grab;
     padding: 5px;
     text-align: center;
+    border-radius: inherit;
 }
 
 #collapse-button:hover {
-    background: #333;
+    background: #777;
 }
 
 #damage-display-container {
     margin-left: 10px;
     margin-top: 5px;
     display: block;
+    overflow: scroll;
 }
 
 #damage-display-slideout {
-    width: 100%;
     background: #fefefe;
     color: black;
     bottom: 0;
     position: fixed;
     z-index: 10000;
+    width: 700px;
+    height: 350px;
+    /* overflow: scroll; */
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
 }
 
 .damage-amount {
@@ -51,4 +56,15 @@
 
 .damage-display {
     display: block;
+}
+
+#welcome-message{
+    padding: 10px;
+    display: block;
+}
+
+#welcome-message-subtext {
+    font-size: 12px;
+    display: block;
+    margin-top: 30px;
 }

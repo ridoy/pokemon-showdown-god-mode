@@ -10,7 +10,11 @@ function TurnChecker() {
             $('#damage-display-container').remove();
             return;
         }
-        // Tab switching
+
+        // Remove welcome message as soon as battle is started
+        $("#welcome-message").remove();
+
+        // Update data display when switching between battles
         if (app.curRoom.battle.id != activeGameId) {
             activeGameId = app.curRoom.battle.id;
             damageCalculator.run();
@@ -20,6 +24,7 @@ function TurnChecker() {
             if (!gamesToNumTurns[room.id]) gamesToNumTurns[room.id] = 0;
         }
         // TODO removing games
+        // If new turn has happened, recalculate damage ranges
         if (app.curRoom.battle.turn > gamesToNumTurns[app.curRoom.battle.id]) {
             gamesToNumTurns[app.curRoom.battle.id] = app.curRoom.battle.turn;
             damageCalculator.run();
