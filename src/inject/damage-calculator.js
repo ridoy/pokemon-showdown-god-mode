@@ -27,16 +27,20 @@ function DamageCalculator() {
     // @param {String} pkmn - Name of Pokémon
     // @return {Pokemon} Pokemon object.
     function initPokemon(gen, pkmn) {
-        return new calc.Pokemon(gen, pkmn.speciesForme, {
-            item: pkmn.item,
-            ability: pkmn.ability,
-            boosts: pkmn.boosts,
-            level: pkmn.level,
-            // TODO The following are constants in randbats, EXCEPT for trick room sets. Fix
-            nature: "Hardy",
-            evs: { hp: 84, atk: 84, def: 84, spa: 84, spd: 84, spe: 84 },
-            ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
-        })            
+        try {
+            return new calc.Pokemon(gen, pkmn.speciesForme, {
+                item: pkmn.item,
+                ability: pkmn.ability,
+                boosts: pkmn.boosts,
+                level: pkmn.level,
+                // TODO The following are constants in randbats, EXCEPT for trick room sets. Fix
+                nature: "Hardy",
+                evs: { hp: 84, atk: 84, def: 84, spa: 84, spd: 84, spe: 84 },
+                ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
+            })       
+        } catch(e) {
+            console.log("Failed to init Pokemon: ", pkmn);
+        }
     };
  
     // Get generation of current battle.
@@ -69,6 +73,11 @@ function DamageCalculator() {
         }
     }
 
+    // Clear display
+    function clearDisplay() {
+        $('#damage-display-container').empty();
+    }
+
     // Display damage info of this turn in page.
     // @param {Object[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
     // @param {Object[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
@@ -76,9 +85,8 @@ function DamageCalculator() {
     function displayDamages(yourDamages, theirDamages) {
         // TODO constants in constants.js
         try {
-            $('#damage-display-container').remove(); // Clear canvas for new data
-            let damageDisplayContainer = $('<div />').attr("id", "damage-display-container");
-
+            clearDisplay();
+            let damageDisplayContainer = $("#damage-display-container");
             let myDamageDisplay = $('<div />').attr("class", "damage-display");
             let myDamageLabel = $('<span/>').html("Your moves and damages (strongest moves are bolded):")
                 .appendTo(damageDisplayContainer);
@@ -100,7 +108,7 @@ function DamageCalculator() {
                 .appendTo(damageDisplayContainer);
             $(theirDamageDisplay).appendTo(damageDisplayContainer);
 
-            damageDisplayContainer.appendTo("#damage-display-slideout");
+            damageDisplayContainer.appendTo("#damage-display-window");
             return true;
         } catch (e) {
             console.log(e);
@@ -156,6 +164,7 @@ function DamageCalculator() {
     }
 
     return {
-        run: run
+        run: run,
+        clearDisplay: clearDisplay
     };
 }

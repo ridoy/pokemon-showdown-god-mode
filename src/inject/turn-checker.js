@@ -2,17 +2,17 @@
 function TurnChecker() {
     let gamesToNumTurns = {};
     let activeGameId = null;
+    let firstBattleWasInitiated = false;
 
     // Periodically check the current turn in the current game. If new turn, recalculate.
     function checkIfNewTurn() {
         if (!app.curRoom.battle) {
             activeGameId = null;
-            $('#damage-display-container').remove();
+            if (firstBattleWasInitiated) damageCalculator.clearDisplay();
             return;
         }
 
-        // Remove welcome message as soon as battle is started
-        $("#welcome-message").remove();
+        firstBattleWasInitiated = true;
 
         // Update data display when switching between battles
         if (app.curRoom.battle.id != activeGameId) {
