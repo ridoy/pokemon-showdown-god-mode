@@ -26,11 +26,11 @@ function DamageCalculator() {
     // @param {Generation} gen - Generation of current battle
     // @param {String} pkmn - Name of Pokémon
     // @return {Pokemon} Pokemon object.
-    function initPokemon(gen, pkmn) {
+    function initPokemon(gen, dex, pkmn) {
         try {
             return new calc.Pokemon(gen, pkmn.speciesForme, {
-                item: pkmn.item,
-                ability: pkmn.ability,
+                item: dex.items.get(pkmn.item).name,
+                ability: dex.items.get(pkmn.ability).name,
                 boosts: pkmn.boosts,
                 level: pkmn.level,
                 // TODO The following are constants in randbats, EXCEPT for trick room sets. Fix
@@ -148,15 +148,15 @@ function DamageCalculator() {
         let theirPkmnSpeciesFormeId = battle.dex.species.get(theirPkmn.speciesForme).id;
         let theirPkmnBaseFormeId = battle.dex.species.get(theirPkmn.name).id;
         let theirMoves = gen7FormatsData[theirPkmnSpeciesFormeId]["randomBattleMoves"] || gen7FormatsData[theirPkmnBaseFormeId]["randomBattleMoves"];
-        let myPkmnObj = initPokemon(gen, myPkmn);
+        let myPkmnObj = initPokemon(gen, battle.dex, myPkmn);
         theirPkmn.speciesForme = theirPkmnSpeciesFormeId;
-        let theirPkmnObj = initPokemon(gen, theirPkmn);
+        let theirPkmnObj = initPokemon(gen, battle.dex, theirPkmn);
         let yourDamages = {};
         let theirDamages = {};
         yourDamages[myPkmnName] = calculateDamages(gen, myPkmn.moves, myPkmnObj, theirPkmnObj);
         theirDamages[myPkmnName] = calculateDamages(gen, theirMoves, theirPkmnObj, myPkmnObj);
         for (let i = 0; i < myOtherPkmn.length; i++) {
-            let pkmn = initPokemon(gen,myOtherPkmn[i]);
+            let pkmn = initPokemon(gen,battle.dex,myOtherPkmn[i]);
             yourDamages[pkmn.name] = calculateDamages(gen, myOtherPkmn[i].moves, pkmn, theirPkmnObj);
             theirDamages[pkmn.name] = calculateDamages(gen, theirMoves, theirPkmnObj, pkmn);
         }
