@@ -18,7 +18,18 @@ console.log("Script loaded");
 // These are available locally as `calc` and `gen7FormatsData` respectively.
 embedScript(smogonCalcData, "data-script");
 embedScript(smogonCalc, "calc-script");
-embedScript(gen7FormatsData, "randbats-moves");
+
+const formatsData = {
+    "1": gen1FormatsData,
+    "2": gen2FormatsData,
+    "3": gen3FormatsData,
+    "4": gen4FormatsData,
+    "5": gen5FormatsData,
+    "6": gen6FormatsData,
+    "7": gen7FormatsData
+};
+
+embedScript(`const formatsData = ${JSON.stringify(formatsData)}`, "randbats-moves");
 
 let damageCalculatorInitScript = "let damageCalculator = new DamageCalculator();"
 embedScript(DamageCalculator.toString() + damageCalculatorInitScript, "damage-calculator-script");

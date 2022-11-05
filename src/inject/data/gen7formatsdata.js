@@ -1,5 +1,4 @@
 // from https://github.com/smogon/pokemon-showdown/blob/master/data/mods/gen7/formats-data.ts
-const fs = require('fs');
 const gen7FormatsData = {
 	bulbasaur: {
 		tier: "LC",
@@ -4665,7 +4664,3 @@ const gen7FormatsData = {
 		tier: "Illegal",
 	},
 };
-
-// iterate
-
-fs.writeFileSync('gen7formatsdata.min.js', JSON.stringify(gen7FormatsData));

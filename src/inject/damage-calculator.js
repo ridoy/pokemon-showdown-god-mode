@@ -1,6 +1,8 @@
 // Damage calculation object. This is embedded as a <script> into the page so we can access local variables like
 // `app` which contains the game state. `app` cannot be accessed otherwise: Chrome extensions work in a separate
 // scope from the page.
+
+console.log("Damage calculator loaded.");
 function DamageCalculator() {
     let $this = this;
 
@@ -10,8 +12,10 @@ function DamageCalculator() {
     // @param {Pokemon} attacker - Attacking Pokémon
     // @param {Pokemon} defender - Defending Pokémon
     // @return {Array[Object]} Damage ranges of each of attacker's moves
-    function calculateDamages(gen, moves, attacker, defender) {
+    function calculateDamages(gen, moves, attacker, defender, dex) {
         return moves.map((move) => {
+            console.log(gen, move, attacker, defender);
+            move = dex.moves.get(move).name; // Handles return102 and hiddenpower{type}60
             let result = calc.calculate(gen, attacker, defender, new calc.Move(gen, move));
             let oppHP = result.defender.stats.hp;
             return {
@@ -33,6 +37,7 @@ function DamageCalculator() {
                 ability: dex.items.get(pkmn.ability).name,
                 boosts: pkmn.boosts,
                 level: pkmn.level,
+                status: pkmn.status,
                 // TODO The following are constants in randbats, EXCEPT for trick room sets. Fix
                 nature: "Hardy",
                 evs: { hp: 84, atk: 84, def: 84, spa: 84, spd: 84, spe: 84 },
@@ -44,10 +49,11 @@ function DamageCalculator() {
     };
  
     // Get generation of current battle.
-    function getGeneration() { // TODO add support for other generations
-        return calc.Generations.get(7);
+    function getGeneration(num) { // TODO add support for other generations
+        return calc.Generations.get(num);
     };
 
+    // TODO: Move display logic to window.js
     // Append damage ranges to an HTML element.
     // @param {Object[Object]} pkmnToDamages - mapping of Pokémon to damages either received or dealt
     // @param {String} className - Class name of individual damage display elements
@@ -73,11 +79,13 @@ function DamageCalculator() {
         }
     }
 
+    // TODO: Move display logic to window.js
     // Clear display
     function clearDisplay() {
         $('#damage-display-container').empty();
     }
 
+    // TODO: Move display logic to window.js
     // Display damage info of this turn in page.
     // @param {Object[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
     // @param {Object[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
@@ -120,23 +128,23 @@ function DamageCalculator() {
     // @param {Number} interval - milliseconds between attempts
     // @param {Number} attempt - Current attempt number 
     function retryIfFail(func, interval, attempt) {
-       if (!attempt) attempt = 0;
-       if (attempt > 5) {
-           return;
-       }
-       setTimeout(function() {
-           var success = func();
-           if (!success) retryIfFail(func, interval, attempt + 1);
-       }, interval);
+        if (!attempt) attempt = 0;
+        if (attempt > 5) {
+            return;
+        }
+        setTimeout(function() {
+            var success = func();
+            if (!success) retryIfFail(func, interval, attempt + 1);
+        }, interval);
     }
 
     // Entry point of DamageCalculator 
     function run() {
-        let gen = getGeneration();
         if (!app || !app.curRoom || !app.curRoom.battle || !app.curRoom.battle.myPokemon) {
             setTimeout(run, 1000);
             return;
         }
+        let gen = getGeneration(app.curRoom.battle.gen);
         
         let battle = app.curRoom.battle;
         let myPkmnName = battle.mySide.active[0].speciesForme;
@@ -147,20 +155,28 @@ function DamageCalculator() {
         let theirPkmn = battle.farSide.active[0];
         let theirPkmnSpeciesFormeId = battle.dex.species.get(theirPkmn.speciesForme).id;
         let theirPkmnBaseFormeId = battle.dex.species.get(theirPkmn.name).id;
-        let theirMoves = gen7FormatsData[theirPkmnSpeciesFormeId]["randomBattleMoves"] || gen7FormatsData[theirPkmnBaseFormeId]["randomBattleMoves"];
+        let theirMoves = getRandomBattleMoves(gen, theirPkmnSpeciesFormeId, theirPkmnBaseFormeId);
         let myPkmnObj = initPokemon(gen, battle.dex, myPkmn);
         theirPkmn.speciesForme = theirPkmnSpeciesFormeId;
         let theirPkmnObj = initPokemon(gen, battle.dex, theirPkmn);
         let yourDamages = {};
         let theirDamages = {};
-        yourDamages[myPkmnName] = calculateDamages(gen, myPkmn.moves, myPkmnObj, theirPkmnObj);
-        theirDamages[myPkmnName] = calculateDamages(gen, theirMoves, theirPkmnObj, myPkmnObj);
+        yourDamages[myPkmnName] = calculateDamages(gen, myPkmn.moves, myPkmnObj, theirPkmnObj, battle.dex);
+        theirDamages[myPkmnName] = calculateDamages(gen, theirMoves, theirPkmnObj, myPkmnObj, battle.dex);
         for (let i = 0; i < myOtherPkmn.length; i++) {
             let pkmn = initPokemon(gen,battle.dex,myOtherPkmn[i]);
-            yourDamages[pkmn.name] = calculateDamages(gen, myOtherPkmn[i].moves, pkmn, theirPkmnObj);
-            theirDamages[pkmn.name] = calculateDamages(gen, theirMoves, theirPkmnObj, pkmn);
+            yourDamages[pkmn.name] = calculateDamages(gen, myOtherPkmn[i].moves, pkmn, theirPkmnObj, battle.dex);
+            theirDamages[pkmn.name] = calculateDamages(gen, theirMoves, theirPkmnObj, pkmn, battle.dex);
         }
         retryIfFail(displayDamages.bind($this, yourDamages, theirDamages), 1000);
+    }
+
+    function getRandomBattleMoves(gen, speciesFormeId, baseFormeId) {
+        if (formatsData[gen.num][speciesFormeId]
+            && formatsData[gen.num][speciesFormeId]["randomBattleMoves"]) {
+            return formatsData[gen.num][speciesFormeId]["randomBattleMoves"];
+        }
+        return formatsData[gen.num][baseFormeId]["randomBattleMoves"];
     }
 
     return {
