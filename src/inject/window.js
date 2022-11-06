@@ -2,16 +2,22 @@
 const START_X = 70; // in px
 const START_Y = 70; // in px
 
-let damageDisplayWindow = $("<div/>").attr("id", "damage-display-window");
-let damageDisplayCollapseButton = $("<span/>").attr("id", "collapse-button")
-    .html("Pokémon Showdown God Mode (click to expand / collapse this window)").appendTo(damageDisplayWindow);
-let damageDisplayContainer = $('<div />').attr("id", "damage-display-container").appendTo(damageDisplayWindow);
+let damageDisplayWindow = $("<div/>")
+    .attr("id", "damage-display-window");
+let damageDisplayCollapseButton = $("<span/>")
+    .attr("id", "collapse-button")
+    .html("Pokémon Showdown God Mode (click to expand / collapse this window)")
+    .appendTo(damageDisplayWindow);
+let damageDisplayContainer = $('<div />')
+    .attr("id", "damage-display-container")
+    .appendTo(damageDisplayWindow);
 damageDisplayWindow.appendTo("body");
 displayWelcomeMessage();
 
 $(damageDisplayWindow).css("top", START_Y);
 $(damageDisplayWindow).css("left", START_X);
 
+// Handle mousedown: start dragging window to new position.
 $(damageDisplayWindow).mousedown(function(e) {
     $(damageDisplayWindow).css("cursor", "grabbing");
     let offset0 = $(this).offset();
@@ -23,11 +29,13 @@ $(damageDisplayWindow).mousedown(function(e) {
     });
 });
 
+// Handle mouseup: stop dragging window.
 $(document).mouseup(function() {
     $(damageDisplayWindow).css("cursor", "grab");
     $(document).unbind('mousemove');
 });
 
+// Handle collapsing/expanding window
 $(damageDisplayCollapseButton).click(function() {
     if ($(damageDisplayContainer).css("display") === "block") {
         $("#damage-display-container").css("display", "none");

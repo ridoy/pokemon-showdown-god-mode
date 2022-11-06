@@ -14,7 +14,6 @@ function DamageCalculator() {
     // @return {Array[Object]} Damage ranges of each of attacker's moves
     function calculateDamages(gen, moves, attacker, defender, dex) {
         return moves.map((move) => {
-            console.log(gen, move, attacker, defender);
             move = dex.moves.get(move).name; // Handles return102 and hiddenpower{type}60
             let result = calc.calculate(gen, attacker, defender, new calc.Move(gen, move));
             let oppHP = result.defender.stats.hp;
