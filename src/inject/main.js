@@ -25,6 +25,7 @@ console.log("Script loaded");
     let damageCalculatorInitScript = "let damageCalculator = new DamageCalculator();"
     embedScript(DamageCalculator.toString() + damageCalculatorInitScript, "damage-calculator-script");
 
+    // TODO does this need to be embedded?
     let turnCheckerInitScript = "let turnChecker = new TurnChecker(); turnChecker.init();"
     embedScript(TurnChecker.toString() + turnCheckerInitScript, "turn-checker-script");
 })();

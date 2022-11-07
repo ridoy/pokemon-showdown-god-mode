@@ -8,7 +8,7 @@ function DamageCalculator() {
 
     // Calculate damage ranges of each move of an attacker on a defender
     // @param {Generation} gen - Generation of current battle
-    // @param {Move[]} moves - List of attacker's 4 moves
+    // @param {Move[]} moves - List of attacker's moves
     // @param {Pokemon} attacker - Attacking Pokémon
     // @param {Pokemon} defender - Defending Pokémon
     // @return {Array[Object]} Damage ranges of each of attacker's moves
@@ -58,7 +58,7 @@ function DamageCalculator() {
     // @param {String} className - Class name of individual damage display elements
     // @param {Node} parentElement - HTML element to which the string created by this function is appended
     // @param {Boolean} isEnemy - Don't show move in UI if isEnemy is true (in current design)
-    function appendRangesToDamageDisplay(pkmnToDamages, className, parentElement, isEnemy) {
+    function appendRangesToDamageDisplay(pkmnToDamages, className, parentElement, isEnemy, faintedPkmn) {
         // isEnemy param to have slightly different UIs is kind of sloppy
         for (let pkmnName of Object.keys(pkmnToDamages)) {
             let moves = pkmnToDamages[pkmnName];
@@ -73,7 +73,7 @@ function DamageCalculator() {
                     ${(isMaxDamage) ? '</b>' : ''}`
             }
             let damageDisplayItem = $("<div/>", {
-                "class": `${className} damage-display-item`
+                "class": `${className} damage-display-item ${(faintedPkmn.includes(pkmnName)) ? 'damage-display-item-fainted' : ''}`
             }).html(thisPkmnDamagesString).appendTo(parentElement);
         }
     }
@@ -89,7 +89,7 @@ function DamageCalculator() {
     // @param {Object[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
     // @param {Object[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
     // @return {boolean} True if execution completes successfully.
-    function displayDamages(yourDamages, theirDamages) {
+    function displayDamages(yourDamages, theirDamages, faintedPkmn) {
         // TODO constants in constants.js
         try {
             clearDisplay();
@@ -97,7 +97,7 @@ function DamageCalculator() {
             let myDamageDisplay = $('<div />').attr("class", "damage-display");
             let myDamageLabel = $('<span/>').html("Your moves and damages (strongest moves are bolded):")
                 .appendTo(damageDisplayContainer);
-            appendRangesToDamageDisplay(yourDamages, "my-damage-display-item", myDamageDisplay, false);
+            appendRangesToDamageDisplay(yourDamages, "my-damage-display-item", myDamageDisplay, false, faintedPkmn);
             $(myDamageDisplay).appendTo(damageDisplayContainer);
 
             // With the current UI, your opponent's damages table has their active pokemon's moves in the
@@ -109,7 +109,7 @@ function DamageCalculator() {
                 .attr("class", "their-damage-display-item damage-display-item")
                 .html(theirMoveNamesColumn)
                 .appendTo(theirDamageDisplay);
-            appendRangesToDamageDisplay(theirDamages, "their-damage-display-item", theirDamageDisplay, true);
+            appendRangesToDamageDisplay(theirDamages, "their-damage-display-item", theirDamageDisplay, true, faintedPkmn);
             let theirDamageLabel = $('<span/>')
                 .html("<br/>Their (potential) moves and damages (actual damages may be higher/lower depending on enemy's held item):")
                 .appendTo(damageDisplayContainer);
@@ -149,6 +149,7 @@ function DamageCalculator() {
         let myPkmnName = battle.mySide.active[0].speciesForme;
         let myTeam = battle.myPokemon;
         let myPkmn = myTeam.filter((pkmn) => pkmn.speciesForme === myPkmnName)[0];
+        let faintedPkmn = myTeam.filter((pkmn) => pkmn.fainted).map((pkmn) => pkmn.name);
         let myOtherPkmn = myTeam.filter((pkmn) => pkmn.speciesForme !== myPkmnName);
         myPkmn.boosts = battle.mySide.active[0].boosts;
         let theirPkmn = battle.farSide.active[0];
@@ -167,7 +168,7 @@ function DamageCalculator() {
             yourDamages[pkmn.name] = calculateDamages(gen, myOtherPkmn[i].moves, pkmn, theirPkmnObj, battle.dex);
             theirDamages[pkmn.name] = calculateDamages(gen, theirMoves, theirPkmnObj, pkmn, battle.dex);
         }
-        retryIfFail(displayDamages.bind($this, yourDamages, theirDamages), 1000);
+        retryIfFail(displayDamages.bind($this, yourDamages, theirDamages, faintedPkmn), 1000);
     }
 
     function getRandomBattleMoves(gen, speciesFormeId, baseFormeId) {
