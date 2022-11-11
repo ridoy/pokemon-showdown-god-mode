@@ -7,6 +7,10 @@ function DataWindow(newDamageCalculator) {
     const WELCOME_MESSAGE_HTML = "<b>Welcome to Pokémon Showdown God Mode.</b>"
         + "<br/> Damage calculations will be shown here once you start a battle.";
     const WELCOME_MESSAGE_SUBTEXT_HTML = "This window can be moved by clicking and dragging."
+    const PLAYER_DAMAGE_LABEL_HTML = "Your moves and damages <br/>"
+        + "<span class='subtext'>Strongest moves are bolded.</span>";
+    const ENEMY_DAMAGE_LABEL_HTML = "<br/>Their (potential) moves and damages<br/>"
+        + "<span class='subtext'>Actual damages may be higher/lower depending on enemy's held item and ability.</span>";
 
     const WINDOW_ID = "damage-display-window";
     const COLLAPSE_BUTTON_ID = "collapse-button";
@@ -14,16 +18,19 @@ function DataWindow(newDamageCalculator) {
     const WINDOW_CONTENT_ID = "damage-display-container";
     const WELCOME_MESSAGE_ID = "welcome-message";
     const WELCOME_MESSAGE_SUBTEXT_ID = "welcome-message-subtext";
+    const DAMAGE_DISPLAY_CLASSNAME = "damage-display";
+    const DAMAGE_DISPLAY_ITEM_CLASSNAME = "damage-display-item";
+    const DAMAGE_DISPLAY_ITEM_FAINTED_CLASSNAME = "damage-display-item-fainted";
+    const PLAYER_DAMAGE_DISPLAY_ITEM_CLASSNAME = "my-damage-display-item";
+    const ENEMY_DAMAGE_DISPLAY_ITEM_CLASSNAME = "their-damage-display-item";
+    const DAMAGE_AMOUNT_CLASSNAME = "damage-amount";
 
     let damageCalculator = newDamageCalculator;
-    let damageDisplayWindow = $("<div/>")
-        .attr("id", WINDOW_ID);
-    let damageDisplayCollapseButton = $("<span/>")
-        .attr("id", COLLAPSE_BUTTON_ID)
+    let damageDisplayWindow = $("<div/>").attr("id", WINDOW_ID);
+    let damageDisplayCollapseButton = $("<span/>").attr("id", COLLAPSE_BUTTON_ID)
         .html(COLLAPSE_BUTTON_TEXT)
         .appendTo(damageDisplayWindow);
-    let damageDisplayContainer = $('<div />')
-        .attr("id", WINDOW_CONTENT_ID)
+    let damageDisplayContainer = $('<div />').attr("id", WINDOW_CONTENT_ID)
         .appendTo(damageDisplayWindow);
     damageDisplayWindow.appendTo("body");
     displayWelcomeMessage();
@@ -87,11 +94,11 @@ function DataWindow(newDamageCalculator) {
                 thisPkmnDamagesString += `<br/>
                     ${(isMaxDamage && !isFainted) ? '<b>' : ''}
                     ${(isEnemy) ? '' : move.moveName + '<br/>'}
-                    <span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span>
+                    <span class=${DAMAGE_AMOUNT_CLASSNAME}>${move.minDamage} - ${move.maxDamage}%</span>
                     ${(isMaxDamage && !isFainted) ? '</b>' : ''}`
             }
-            let damageDisplayItemClassName = `damage-display-item ${className}`;
-            damageDisplayItemClassName += (isFainted) ? 'damage-display-item-fainted' : '';
+            let damageDisplayItemClassName = `${DAMAGE_DISPLAY_ITEM_CLASSNAME} ${className}`;
+            damageDisplayItemClassName += (isFainted) ? DAMAGE_DISPLAY_ITEM_FAINTED_CLASSNAME : '';
             let damageDisplayItem = $("<div/>", {
                 "class": damageDisplayItemClassName
             }).html(thisPkmnDamagesString).appendTo(parentElement);
@@ -117,50 +124,35 @@ function DataWindow(newDamageCalculator) {
         }
     }
 
-    // Clear display
-    function clearDisplay() {
-        $('#damage-display-container').empty();
-    }
-
     // Display damage info of this turn in window.
     // @param {Object[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
     // @param {Object[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
     // @return {boolean} True if execution completes successfully.
     function displayDamages(yourDamages, theirDamages, faintedPkmn) {
-        try {
-            clearDisplay();
-            let damageDisplayContainer = $("#damage-display-container");
-            let myDamageDisplay = $('<div />').attr("class", "damage-display");
-            let myDamageLabel = $('<span/>').html("Your moves and damages (strongest moves are bolded):")
-                .appendTo(damageDisplayContainer);
-            appendRangesToDamageDisplay(yourDamages, "my-damage-display-item", myDamageDisplay, false, faintedPkmn);
-            $(myDamageDisplay).appendTo(damageDisplayContainer);
+        clearDisplay();
+        let myDamageDisplay = $('<div />').attr("class", DAMAGE_DISPLAY_CLASSNAME);
+        let myDamageLabel = $('<span/>').html(PLAYER_DAMAGE_LABEL_HTML)
+            .appendTo(damageDisplayContainer);
+        appendRangesToDamageDisplay(yourDamages, PLAYER_DAMAGE_DISPLAY_ITEM_CLASSNAME, myDamageDisplay, false, faintedPkmn);
+        $(myDamageDisplay).appendTo(damageDisplayContainer);
 
-            // With the current UI, your opponent's damages table has their active pokemon's moves in the
-            // first column, so we generate that first
-            let theirDamageDisplay = $('<div />').attr("class", "damage-display");
-            let theirMoves = theirDamages[Object.keys(theirDamages)[0]];
-            let theirMoveNamesColumn = theirMoves.reduce((prev,curr) => `${prev}<br/><b>${curr.moveName}</b>`, '');
-            let theirMovesDisplay = $("<div/>")
-                .attr("class", "their-damage-display-item damage-display-item")
-                .html(theirMoveNamesColumn)
-                .appendTo(theirDamageDisplay);
-            appendRangesToDamageDisplay(theirDamages, "their-damage-display-item", theirDamageDisplay, true, faintedPkmn);
-            let theirDamageLabel = $('<span/>')
-                .html(`<br/>Their (potential) moves and damages <br/>
-                       <span class='subtext'>Actual damages may be higher/lower depending on enemy's held item and ability</span>`)
-                .appendTo(damageDisplayContainer);
-            $(theirDamageDisplay).appendTo(damageDisplayContainer);
-
-            damageDisplayContainer.appendTo("#damage-display-window");
-            return true;
-        } catch (e) {
-            console.log(e);
-        }
+        // With the current UI, your opponent's damages table has their active pokemon's moves in the
+        // first column, so we generate that first
+        let theirDamageDisplay = $('<div />').attr("class", DAMAGE_DISPLAY_CLASSNAME);
+        let theirMoves = theirDamages[Object.keys(theirDamages)[0]];
+        let theirMoveNamesColumn = theirMoves.reduce((prev,curr) => `${prev}<br/><b>${curr.moveName}</b>`, '');
+        let theirMovesDisplay = $("<div/>")
+            .html(theirMoveNamesColumn)
+            .attr("class", `${ENEMY_DAMAGE_DISPLAY_ITEM_CLASSNAME} ${DAMAGE_DISPLAY_ITEM_CLASSNAME}`)
+            .appendTo(theirDamageDisplay);
+        appendRangesToDamageDisplay(theirDamages, ENEMY_DAMAGE_DISPLAY_ITEM_CLASSNAME, theirDamageDisplay, true, faintedPkmn);
+        let theirDamageLabel = $('<span/>')
+            .html(ENEMY_DAMAGE_LABEL_HTML)
+            .appendTo(damageDisplayContainer);
+        $(theirDamageDisplay).appendTo(damageDisplayContainer);
     };
 
-    // Recalculate all damages using the current state of the battle and update the displayed data
-    // accordingly.
+    // Recalculate all damages using the current state of the battle and update the displayed data.
     function refresh() {
         let damages = damageCalculator.run();
         if (!damages) {
@@ -168,6 +160,11 @@ function DataWindow(newDamageCalculator) {
             return;
         }
         displayDamages(damages.yourDamages, damages.theirDamages, damages.faintedPkmn);
+    }
+
+    // Clear display
+    function clearDisplay() {
+        $(damageDisplayContainer).empty();
     }
 
     return {
