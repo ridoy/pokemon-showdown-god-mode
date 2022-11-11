@@ -159,22 +159,6 @@ function DamageCalculator() {
         }
     };
 
-    // TODO: Move display logic to window.js    
-    // Generic failure retry function
-    // @param {Function} func - Function to be attempted
-    // @param {Number} interval - milliseconds between attempts
-    // @param {Number} attempt - Current attempt number 
-    function retryIfFail(func, interval, attempt) {
-        if (!attempt) attempt = 0;
-        if (attempt > 5) {
-            return;
-        }
-        setTimeout(function() {
-            var success = func();
-            if (!success) retryIfFail(func, interval, attempt + 1);
-        }, interval);
-    }
-
     // Entry point of DamageCalculator 
     function run() {
         if (!app || !app.curRoom || !app.curRoom.battle || !app.curRoom.battle.myPokemon) {
@@ -207,7 +191,7 @@ function DamageCalculator() {
             yourDamages[pkmn.name] = calculateDamages(gen, myOtherPkmn[i].moves, pkmn, theirPkmnObj, battle.dex);
             theirDamages[pkmn.name] = calculateDamages(gen, theirMoves, theirPkmnObj, pkmn, battle.dex);
         }
-        retryIfFail(displayDamages.bind($this, yourDamages, theirDamages, faintedPkmn), 1000);
+        displayDamages(yourDamages, theirDamages, faintedPkmn);
     }
 
     return {

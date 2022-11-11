@@ -2,16 +2,27 @@
 function DataWindow() {
     const START_X = 70; // in px
     const START_Y = 70; // in px
+
     const COLLAPSE_BUTTON_TEXT = "Pokémon Showdown God Mode (click to expand / collapse this window)";
+    const WELCOME_MESSAGE_HTML = "<b>Welcome to Pokémon Showdown God Mode.</b>"
+        + "<br/> Damage calculations will be shown here once you start a battle.";
+    const WELCOME_MESSAGE_SUBTEXT_HTML = "This window can be moved by clicking and dragging."
+
+    const WINDOW_ID = "damage-display-window";
+    const COLLAPSE_BUTTON_ID = "collapse-button";
+    const COLLAPSE_BUTTON_COLLAPSED_CLASSNAME = "collapse-button-collapsed";
+    const WINDOW_CONTENT_ID = "damage-display-container";
+    const WELCOME_MESSAGE_ID = "welcome-message";
+    const WELCOME_MESSAGE_SUBTEXT_ID = "welcome-message-subtext";
 
     let damageDisplayWindow = $("<div/>")
-        .attr("id", "damage-display-window");
+        .attr("id", WINDOW_ID);
     let damageDisplayCollapseButton = $("<span/>")
-        .attr("id", "collapse-button")
+        .attr("id", COLLAPSE_BUTTON_ID)
         .html(COLLAPSE_BUTTON_TEXT)
         .appendTo(damageDisplayWindow);
     let damageDisplayContainer = $('<div />')
-        .attr("id", "damage-display-container")
+        .attr("id", WINDOW_CONTENT_ID)
         .appendTo(damageDisplayWindow);
     damageDisplayWindow.appendTo("body");
     displayWelcomeMessage();
@@ -34,28 +45,38 @@ function DataWindow() {
     // Handle mouseup: stop dragging window.
     $(document).mouseup(function() {
         $(damageDisplayWindow).css("cursor", "grab");
-        $(document).unbind('mousemove');
+        $(document).unbind("mousemove");
     });
 
     // Handle collapsing/expanding window
     $(damageDisplayCollapseButton).click(function() {
         if ($(damageDisplayContainer).css("display") === "block") {
-            $("#damage-display-container").css("display", "none");
-            $(damageDisplayCollapseButton).addClass("collapse-button-collapsed");
+            $(damageDisplayContainer).css("display", "none");
+            $(damageDisplayCollapseButton).addClass(COLLAPSE_BUTTON_COLLAPSED_CLASSNAME);
         } else {
-            $(damageDisplayCollapseButton).removeClass("collapse-button-collapsed");
-            $("#damage-display-container").css("display", "block");
+            $(damageDisplayCollapseButton).removeClass(COLLAPSE_BUTTON_COLLAPSED_CLASSNAME);
+            $(damageDisplayContainer).css("display", "block");
         }
     });
 
     // Display and embed a welcome message in the window.
     function displayWelcomeMessage() {
-        let welcomeMessage = $("<span/>").attr("id", "welcome-message")
-            .html("<b>Welcome to Pokémon Showdown God Mode.</b> <br/> Damage calculations will be shown here once you start a battle.")
+        let welcomeMessage = $("<span/>").attr("id", WELCOME_MESSAGE_ID)
+            .html(WELCOME_MESSAGE_HTML)
             .appendTo(damageDisplayContainer);
-        let welcomeMessageSubtext = $("<span/>").attr("id", "welcome-message-subtext")
-            .html("This window can be moved by clicking and dragging.")
+        let welcomeMessageSubtext = $("<span/>").attr("id", WELCOME_MESSAGE_SUBTEXT_ID)
+            .html(WELCOME_MESSAGE_SUBTEXT_HTML)
             .appendTo(damageDisplayContainer);
     }
 
+    // Recalculate all damages using the current state of the battle and update the displayed data
+    // accordingly.
+    function refresh() {
+        // Call damageCalculator.calculate();
+        // Use data to update window
+    }
+
+    return {
+        refresh: refresh
+    }
 }

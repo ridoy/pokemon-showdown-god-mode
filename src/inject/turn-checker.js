@@ -3,6 +3,7 @@ function TurnChecker() {
     let gamesToNumTurns = {};
     let activeGameId = null;
     let firstBattleWasInitiated = false;
+    let damageCalculator;
 
     // Periodically check the current turn in the current game. If new turn, recalculate.
     function checkIfNewTurn() {
@@ -32,8 +33,9 @@ function TurnChecker() {
     }
 
     // Entry point
-    function init() {
+    function init(newDamageCalculator) {
         setInterval(checkIfNewTurn, 1000);
+        damageCalculator = newDamageCalculator;
     }
 
     return {
