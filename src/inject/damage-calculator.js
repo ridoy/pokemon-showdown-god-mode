@@ -2,7 +2,6 @@
 // `app` which contains the game state. `app` cannot be accessed otherwise: Chrome extensions work in a separate
 // scope from the page.
 
-console.log("Damage calculator loaded.");
 function DamageCalculator() {
     let $this = this;
 
@@ -47,10 +46,25 @@ function DamageCalculator() {
         }
     };
  
-    // Get generation of current battle.
-    function getGeneration(num) { // TODO add support for other generations
+    // Get Generation object for generation of current battle.
+    // @param num {Number} - Generation as number (1 through 8 at time of writing)
+    // @return {Generation} Generation object
+    function getGeneration(num) {
         return calc.Generations.get(num);
     };
+
+    // Get list of moves this Pokemon can have in random battles
+    // @param gen {Generation} - Generation of current battle
+    // @param speciesFormeId {String} - Species form of Pokemon
+    // @param baseFormeId {String} - Base form of Pokemon
+    // @return {Array[String]} List of moves
+    function getRandomBattleMoves(gen, speciesFormeId, baseFormeId) {
+        if (formatsData[gen.num][speciesFormeId]
+            && formatsData[gen.num][speciesFormeId]["randomBattleMoves"]) {
+            return formatsData[gen.num][speciesFormeId]["randomBattleMoves"];
+        }
+        return formatsData[gen.num][baseFormeId]["randomBattleMoves"];
+    }
 
     // TODO: Move display logic to window.js
     // Append damage ranges to an HTML element.
@@ -62,19 +76,41 @@ function DamageCalculator() {
         // isEnemy param to have slightly different UIs is kind of sloppy
         for (let pkmnName of Object.keys(pkmnToDamages)) {
             let moves = pkmnToDamages[pkmnName];
+            let isFainted = faintedPkmn.includes(pkmnName);
             let maxDamage = Math.max.apply(null, moves.map(move => move.maxDamage));               
-            let thisPkmnDamagesString = `<b>${pkmnName}</b>`;
+            let thisPkmnDamagesString = (!isFainted) ? `<b>${pkmnName}</b>` : pkmnName;
             for (let move of moves) {
-                let isMaxDamage = move.maxDamage === maxDamage;
+                let isMaxDamage = move.maxDamage === maxDamage && move.maxDamage !== 0;
                 thisPkmnDamagesString += `<br/>
-                    ${(isMaxDamage) ? '<b>' : ''}
+                    ${(isMaxDamage && !isFainted) ? '<b>' : ''}
                     ${(isEnemy) ? '' : move.moveName + '<br/>'}
                     <span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span>
-                    ${(isMaxDamage) ? '</b>' : ''}`
+                    ${(isMaxDamage && !isFainted) ? '</b>' : ''}`
             }
+            let damageDisplayItemClassName = `damage-display-item ${className}`;
+            damageDisplayItemClassName += (isFainted) ? 'damage-display-item-fainted' : '';
             let damageDisplayItem = $("<div/>", {
-                "class": `${className} damage-display-item ${(faintedPkmn.includes(pkmnName)) ? 'damage-display-item-fainted' : ''}`
+                "class": damageDisplayItemClassName
             }).html(thisPkmnDamagesString).appendTo(parentElement);
+        }
+    }
+
+    // Convert the maximum damage of a move (in percent) to a class name representing how many hits would result in a KO.
+    // @param {Number} maxDamage - max damage of move as a percentage
+    // @param {Boolean} attackerIsEnemy - if maxDamage represents damage dealt by enemy
+    // @return {String} class name that represents this damage amount
+    function getKORangeClassName(maxDamage, attackerIsEnemy) {
+        const isOneHitKO = maxDamage >= 100;
+        const isTwoHitKO = maxDamage >= 50;
+        const isThreeHitKO = maxDamage >= (100 / 3);
+        if (isOneHitKO) {
+            return (attackerIsEnemy) ? "background-red" : "background-green";
+        } else if (isTwoHitKO) {
+            return (attackerIsEnemy) ? "background-orange" : "background-yellow";
+        } else if (isThreeHitKO) {
+            return (attackerIsEnemy) ? "background-yellow" : "background-orange";
+        } else {
+            return (attackerIsEnemy) ? "background-green" : "background-red";
         }
     }
 
@@ -85,12 +121,12 @@ function DamageCalculator() {
     }
 
     // TODO: Move display logic to window.js
-    // Display damage info of this turn in page.
+    // Display damage info of this turn in window.
     // @param {Object[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
     // @param {Object[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
     // @return {boolean} True if execution completes successfully.
     function displayDamages(yourDamages, theirDamages, faintedPkmn) {
-        // TODO constants in constants.js
+        // TODO: constants in constants.js
         try {
             clearDisplay();
             let damageDisplayContainer = $("#damage-display-container");
@@ -111,7 +147,8 @@ function DamageCalculator() {
                 .appendTo(theirDamageDisplay);
             appendRangesToDamageDisplay(theirDamages, "their-damage-display-item", theirDamageDisplay, true, faintedPkmn);
             let theirDamageLabel = $('<span/>')
-                .html("<br/>Their (potential) moves and damages (actual damages may be higher/lower depending on enemy's held item):")
+                .html(`<br/>Their (potential) moves and damages <br/>
+                       <span class='subtext'>Actual damages may be higher/lower depending on enemy's held item and ability</span>`)
                 .appendTo(damageDisplayContainer);
             $(theirDamageDisplay).appendTo(damageDisplayContainer);
 
@@ -122,6 +159,7 @@ function DamageCalculator() {
         }
     };
 
+    // TODO: Move display logic to window.js    
     // Generic failure retry function
     // @param {Function} func - Function to be attempted
     // @param {Number} interval - milliseconds between attempts
@@ -143,6 +181,7 @@ function DamageCalculator() {
             setTimeout(run, 1000);
             return;
         }
+
         let gen = getGeneration(app.curRoom.battle.gen);
         
         let battle = app.curRoom.battle;
@@ -169,14 +208,6 @@ function DamageCalculator() {
             theirDamages[pkmn.name] = calculateDamages(gen, theirMoves, theirPkmnObj, pkmn, battle.dex);
         }
         retryIfFail(displayDamages.bind($this, yourDamages, theirDamages, faintedPkmn), 1000);
-    }
-
-    function getRandomBattleMoves(gen, speciesFormeId, baseFormeId) {
-        if (formatsData[gen.num][speciesFormeId]
-            && formatsData[gen.num][speciesFormeId]["randomBattleMoves"]) {
-            return formatsData[gen.num][speciesFormeId]["randomBattleMoves"];
-        }
-        return formatsData[gen.num][baseFormeId]["randomBattleMoves"];
     }
 
     return {
