@@ -66,104 +66,10 @@ function DamageCalculator() {
         return formatsData[gen.num][baseFormeId]["randomBattleMoves"];
     }
 
-    // TODO: Move display logic to window.js
-    // Append damage ranges to an HTML element.
-    // @param {Object[Object]} pkmnToDamages - mapping of Pokémon to damages either received or dealt
-    // @param {String} className - Class name of individual damage display elements
-    // @param {Node} parentElement - HTML element to which the string created by this function is appended
-    // @param {Boolean} isEnemy - Don't show move in UI if isEnemy is true (in current design)
-    function appendRangesToDamageDisplay(pkmnToDamages, className, parentElement, isEnemy, faintedPkmn) {
-        // isEnemy param to have slightly different UIs is kind of sloppy
-        for (let pkmnName of Object.keys(pkmnToDamages)) {
-            let moves = pkmnToDamages[pkmnName];
-            let isFainted = faintedPkmn.includes(pkmnName);
-            let maxDamage = Math.max.apply(null, moves.map(move => move.maxDamage));               
-            let thisPkmnDamagesString = (!isFainted) ? `<b>${pkmnName}</b>` : pkmnName;
-            for (let move of moves) {
-                let isMaxDamage = move.maxDamage === maxDamage && move.maxDamage !== 0;
-                thisPkmnDamagesString += `<br/>
-                    ${(isMaxDamage && !isFainted) ? '<b>' : ''}
-                    ${(isEnemy) ? '' : move.moveName + '<br/>'}
-                    <span class='damage-amount'>${move.minDamage} - ${move.maxDamage}%</span>
-                    ${(isMaxDamage && !isFainted) ? '</b>' : ''}`
-            }
-            let damageDisplayItemClassName = `damage-display-item ${className}`;
-            damageDisplayItemClassName += (isFainted) ? 'damage-display-item-fainted' : '';
-            let damageDisplayItem = $("<div/>", {
-                "class": damageDisplayItemClassName
-            }).html(thisPkmnDamagesString).appendTo(parentElement);
-        }
-    }
-
-    // Convert the maximum damage of a move (in percent) to a class name representing how many hits would result in a KO.
-    // @param {Number} maxDamage - max damage of move as a percentage
-    // @param {Boolean} attackerIsEnemy - if maxDamage represents damage dealt by enemy
-    // @return {String} class name that represents this damage amount
-    function getKORangeClassName(maxDamage, attackerIsEnemy) {
-        const isOneHitKO = maxDamage >= 100;
-        const isTwoHitKO = maxDamage >= 50;
-        const isThreeHitKO = maxDamage >= (100 / 3);
-        if (isOneHitKO) {
-            return (attackerIsEnemy) ? "background-red" : "background-green";
-        } else if (isTwoHitKO) {
-            return (attackerIsEnemy) ? "background-orange" : "background-yellow";
-        } else if (isThreeHitKO) {
-            return (attackerIsEnemy) ? "background-yellow" : "background-orange";
-        } else {
-            return (attackerIsEnemy) ? "background-green" : "background-red";
-        }
-    }
-
-    // TODO: Move display logic to window.js
-    // Clear display
-    function clearDisplay() {
-        $('#damage-display-container').empty();
-    }
-
-    // TODO: Move display logic to window.js
-    // Display damage info of this turn in window.
-    // @param {Object[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
-    // @param {Object[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
-    // @return {boolean} True if execution completes successfully.
-    function displayDamages(yourDamages, theirDamages, faintedPkmn) {
-        // TODO: constants in constants.js
-        try {
-            clearDisplay();
-            let damageDisplayContainer = $("#damage-display-container");
-            let myDamageDisplay = $('<div />').attr("class", "damage-display");
-            let myDamageLabel = $('<span/>').html("Your moves and damages (strongest moves are bolded):")
-                .appendTo(damageDisplayContainer);
-            appendRangesToDamageDisplay(yourDamages, "my-damage-display-item", myDamageDisplay, false, faintedPkmn);
-            $(myDamageDisplay).appendTo(damageDisplayContainer);
-
-            // With the current UI, your opponent's damages table has their active pokemon's moves in the
-            // first column, so we generate that first
-            let theirDamageDisplay = $('<div />').attr("class", "damage-display");
-            let theirMoves = theirDamages[Object.keys(theirDamages)[0]];
-            let theirMoveNamesColumn = theirMoves.reduce((prev,curr) => `${prev}<br/><b>${curr.moveName}</b>`, '');
-            let theirMovesDisplay = $("<div/>")
-                .attr("class", "their-damage-display-item damage-display-item")
-                .html(theirMoveNamesColumn)
-                .appendTo(theirDamageDisplay);
-            appendRangesToDamageDisplay(theirDamages, "their-damage-display-item", theirDamageDisplay, true, faintedPkmn);
-            let theirDamageLabel = $('<span/>')
-                .html(`<br/>Their (potential) moves and damages <br/>
-                       <span class='subtext'>Actual damages may be higher/lower depending on enemy's held item and ability</span>`)
-                .appendTo(damageDisplayContainer);
-            $(theirDamageDisplay).appendTo(damageDisplayContainer);
-
-            damageDisplayContainer.appendTo("#damage-display-window");
-            return true;
-        } catch (e) {
-            console.log(e);
-        }
-    };
-
     // Entry point of DamageCalculator 
     function run() {
         if (!app || !app.curRoom || !app.curRoom.battle || !app.curRoom.battle.myPokemon) {
-            setTimeout(run, 1000);
-            return;
+            return null;
         }
 
         let gen = getGeneration(app.curRoom.battle.gen);
@@ -191,11 +97,14 @@ function DamageCalculator() {
             yourDamages[pkmn.name] = calculateDamages(gen, myOtherPkmn[i].moves, pkmn, theirPkmnObj, battle.dex);
             theirDamages[pkmn.name] = calculateDamages(gen, theirMoves, theirPkmnObj, pkmn, battle.dex);
         }
-        displayDamages(yourDamages, theirDamages, faintedPkmn);
+        return {
+            yourDamages: yourDamages,
+            theirDamages: theirDamages,
+            faintedPkmn: faintedPkmn
+        };
     }
 
     return {
-        run: run,
-        clearDisplay: clearDisplay
+        run: run
     };
 }

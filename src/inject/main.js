@@ -38,7 +38,7 @@ function embedScript(scriptAsString, id) {
 }
 
 function init() {
-    let dataWindow = new DataWindow();
-    let turnChecker = new TurnChecker();
-    turnChecker.init(new DamageCalculator())
+    let dataWindow = new DataWindow(new DamageCalculator);
+    let turnChecker = new TurnChecker(dataWindow);
+    turnChecker.init();
 }

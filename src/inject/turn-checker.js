@@ -1,15 +1,15 @@
 // Orchestrates damage calculation updates by tracking turn number in active games
-function TurnChecker() {
+function TurnChecker(newDataWindow) {
     let gamesToNumTurns = {};
     let activeGameId = null;
     let firstBattleWasInitiated = false;
-    let damageCalculator;
+    let dataWindow = newDataWindow;
 
     // Periodically check the current turn in the current game. If new turn, recalculate.
     function checkIfNewTurn() {
         if (!app.curRoom.battle) {
             activeGameId = null;
-            if (firstBattleWasInitiated) damageCalculator.clearDisplay();
+            if (firstBattleWasInitiated) dataWindow.clearDisplay();
             return;
         }
 
@@ -18,7 +18,7 @@ function TurnChecker() {
         // Update data display when switching between battles
         if (app.curRoom.battle.id != activeGameId) {
             activeGameId = app.curRoom.battle.id;
-            damageCalculator.run();
+            dataWindow.refresh();
         }
         // If new game was added since we last checked, add it to our watchlist
         for (let room of app.roomList) {
@@ -28,14 +28,13 @@ function TurnChecker() {
         // If new turn has happened, recalculate damage ranges
         if (app.curRoom.battle.turn > gamesToNumTurns[app.curRoom.battle.id]) {
             gamesToNumTurns[app.curRoom.battle.id] = app.curRoom.battle.turn;
-            damageCalculator.run();
+            dataWindow.refresh();
         }
     }
 
     // Entry point
-    function init(newDamageCalculator) {
+    function init(newDataWindow) {
         setInterval(checkIfNewTurn, 1000);
-        damageCalculator = newDamageCalculator;
     }
 
     return {
