@@ -22,6 +22,8 @@ console.log("Script loaded");
     embedScript(smogonCalcData, "data-script");
     embedScript(smogonCalc, "calc-script");
 
+    // DamageCalculator needs to be embedded so it can access the page's `app` variable which contains the game state
+    // Window and TurnChecker depend on DamageCalculator, so they must be embedded also.
     let initScript = DataWindow.toString();
     initScript += DamageCalculator.toString();
     initScript += TurnChecker.toString();

@@ -25,47 +25,39 @@ function DataWindow(newDamageCalculator) {
     const ENEMY_DAMAGE_DISPLAY_ITEM_CLASSNAME = "their-damage-display-item";
     const DAMAGE_AMOUNT_CLASSNAME = "damage-amount";
 
-    let damageCalculator = newDamageCalculator;
-    let damageDisplayWindow = $("<div/>").attr("id", WINDOW_ID);
-    let damageDisplayCollapseButton = $("<span/>").attr("id", COLLAPSE_BUTTON_ID)
-        .html(COLLAPSE_BUTTON_TEXT)
-        .appendTo(damageDisplayWindow);
-    let damageDisplayContainer = $('<div />').attr("id", WINDOW_CONTENT_ID)
-        .appendTo(damageDisplayWindow);
-    damageDisplayWindow.appendTo("body");
-    displayWelcomeMessage();
+    let damageCalculator, damageDisplayWindow, damageDisplayCollapseButton, damageDisplayContainer;
 
-    $(damageDisplayWindow).css("top", START_Y);
-    $(damageDisplayWindow).css("left", START_X);
+    (function init() {
+        damageCalculator = newDamageCalculator;
+        damageDisplayWindow = $("<div/>").attr("id", WINDOW_ID)
+            .appendTo("body");
+        damageDisplayCollapseButton = $("<span/>").attr("id", COLLAPSE_BUTTON_ID)
+            .html(COLLAPSE_BUTTON_TEXT)
+            .appendTo(damageDisplayWindow);
+        damageDisplayContainer = $('<div />').attr("id", WINDOW_CONTENT_ID)
+            .appendTo(damageDisplayWindow);
 
-    // Handle mousedown: start dragging window to new position.
-    $(damageDisplayWindow).mousedown(function(e) {
-        $(damageDisplayWindow).css("cursor", "grabbing");
-        let offset0 = $(this).offset();
-        let x0 = e.pageX;
-        let y0 = e.pageY;
-        $(document).mousemove(function(e) {
-            $(damageDisplayWindow).css("top", offset0.top + (e.pageY - y0));
-            $(damageDisplayWindow).css("left", offset0.left + (e.pageX - x0));
-        });
-    });
+        $(damageDisplayWindow).css("top", START_Y);
+        $(damageDisplayWindow).css("left", START_X);
+              
+        attachEventListeners();
+        displayWelcomeMessage();
+    })();
 
-    // Handle mouseup: stop dragging window.
-    $(document).mouseup(function() {
-        $(damageDisplayWindow).css("cursor", "grab");
-        $(document).unbind("mousemove");
-    });
-
-    // Handle collapsing/expanding window
-    $(damageDisplayCollapseButton).click(function() {
-        if ($(damageDisplayContainer).css("display") === "block") {
-            $(damageDisplayContainer).css("display", "none");
-            $(damageDisplayCollapseButton).addClass(COLLAPSE_BUTTON_COLLAPSED_CLASSNAME);
-        } else {
-            $(damageDisplayCollapseButton).removeClass(COLLAPSE_BUTTON_COLLAPSED_CLASSNAME);
-            $(damageDisplayContainer).css("display", "block");
+    // Recalculate all damages using the current state of the battle and update the displayed data.
+    function refresh() {
+        let damages = damageCalculator.run();
+        if (!damages) {
+            setTimeout(refresh, 1000);
+            return;
         }
-    });
+        displayDamages(damages.yourDamages, damages.theirDamages, damages.faintedPkmn);
+    }
+
+    // Clear display
+    function clearDisplay() {
+        $(damageDisplayContainer).empty();
+    }
 
     // Display and embed a welcome message in the window.
     function displayWelcomeMessage() {
@@ -75,6 +67,34 @@ function DataWindow(newDamageCalculator) {
         let welcomeMessageSubtext = $("<span/>").attr("id", WELCOME_MESSAGE_SUBTEXT_ID)
             .html(WELCOME_MESSAGE_SUBTEXT_HTML)
             .appendTo(damageDisplayContainer);
+    }
+
+    // Display damage info of this turn in window.
+    // @param {Object[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
+    // @param {Object[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
+    // @return {boolean} True if execution completes successfully.
+    function displayDamages(yourDamages, theirDamages, faintedPkmn) {
+        clearDisplay();
+        let myDamageDisplay = $('<div />').attr("class", DAMAGE_DISPLAY_CLASSNAME);
+        let myDamageLabel = $('<span/>').html(PLAYER_DAMAGE_LABEL_HTML)
+            .appendTo(damageDisplayContainer);
+        appendRangesToDamageDisplay(yourDamages, PLAYER_DAMAGE_DISPLAY_ITEM_CLASSNAME, myDamageDisplay, false, faintedPkmn);
+        $(myDamageDisplay).appendTo(damageDisplayContainer);
+
+        // With the current UI, your opponent's damages table has their active pokemon's moves in the
+        // first column, so we generate that first
+        let theirDamageDisplay = $('<div />').attr("class", DAMAGE_DISPLAY_CLASSNAME);
+        let theirMoves = theirDamages[Object.keys(theirDamages)[0]];
+        let theirMoveNamesColumn = theirMoves.reduce((prev,curr) => `${prev}<br/><b>${curr.moveName}</b>`, '');
+        let theirMovesDisplay = $("<div/>")
+            .html(theirMoveNamesColumn)
+            .attr("class", `${ENEMY_DAMAGE_DISPLAY_ITEM_CLASSNAME} ${DAMAGE_DISPLAY_ITEM_CLASSNAME}`)
+            .appendTo(theirDamageDisplay);
+        appendRangesToDamageDisplay(theirDamages, ENEMY_DAMAGE_DISPLAY_ITEM_CLASSNAME, theirDamageDisplay, true, faintedPkmn);
+        let theirDamageLabel = $('<span/>')
+            .html(ENEMY_DAMAGE_LABEL_HTML)
+            .appendTo(damageDisplayContainer);
+        $(theirDamageDisplay).appendTo(damageDisplayContainer);
     }
 
     // Append damage ranges to an HTML element.
@@ -124,47 +144,35 @@ function DataWindow(newDamageCalculator) {
         }
     }
 
-    // Display damage info of this turn in window.
-    // @param {Object[Object]} yourDamages - Damages your Pokémon can inflict on the enemy's active Pokémon.
-    // @param {Object[Object]} theirDamages - Damages their active Pokémon can inflict on your Pokémon.
-    // @return {boolean} True if execution completes successfully.
-    function displayDamages(yourDamages, theirDamages, faintedPkmn) {
-        clearDisplay();
-        let myDamageDisplay = $('<div />').attr("class", DAMAGE_DISPLAY_CLASSNAME);
-        let myDamageLabel = $('<span/>').html(PLAYER_DAMAGE_LABEL_HTML)
-            .appendTo(damageDisplayContainer);
-        appendRangesToDamageDisplay(yourDamages, PLAYER_DAMAGE_DISPLAY_ITEM_CLASSNAME, myDamageDisplay, false, faintedPkmn);
-        $(myDamageDisplay).appendTo(damageDisplayContainer);
+    function attachEventListeners() {
+        // Handle mousedown: start dragging window to new position.
+        $(damageDisplayWindow).mousedown(function(e) {
+            $(damageDisplayWindow).css("cursor", "grabbing");
+            let offset0 = $(this).offset();
+            let x0 = e.pageX;
+            let y0 = e.pageY;
+            $(document).mousemove(function(e) {
+                $(damageDisplayWindow).css("top", offset0.top + (e.pageY - y0));
+                $(damageDisplayWindow).css("left", offset0.left + (e.pageX - x0));
+            });
+        });
 
-        // With the current UI, your opponent's damages table has their active pokemon's moves in the
-        // first column, so we generate that first
-        let theirDamageDisplay = $('<div />').attr("class", DAMAGE_DISPLAY_CLASSNAME);
-        let theirMoves = theirDamages[Object.keys(theirDamages)[0]];
-        let theirMoveNamesColumn = theirMoves.reduce((prev,curr) => `${prev}<br/><b>${curr.moveName}</b>`, '');
-        let theirMovesDisplay = $("<div/>")
-            .html(theirMoveNamesColumn)
-            .attr("class", `${ENEMY_DAMAGE_DISPLAY_ITEM_CLASSNAME} ${DAMAGE_DISPLAY_ITEM_CLASSNAME}`)
-            .appendTo(theirDamageDisplay);
-        appendRangesToDamageDisplay(theirDamages, ENEMY_DAMAGE_DISPLAY_ITEM_CLASSNAME, theirDamageDisplay, true, faintedPkmn);
-        let theirDamageLabel = $('<span/>')
-            .html(ENEMY_DAMAGE_LABEL_HTML)
-            .appendTo(damageDisplayContainer);
-        $(theirDamageDisplay).appendTo(damageDisplayContainer);
-    };
+        // Handle mouseup: stop dragging window.
+        $(document).mouseup(function() {
+            $(damageDisplayWindow).css("cursor", "grab");
+            $(document).unbind("mousemove");
+        });
 
-    // Recalculate all damages using the current state of the battle and update the displayed data.
-    function refresh() {
-        let damages = damageCalculator.run();
-        if (!damages) {
-            setTimeout(refresh, 1000);
-            return;
-        }
-        displayDamages(damages.yourDamages, damages.theirDamages, damages.faintedPkmn);
-    }
-
-    // Clear display
-    function clearDisplay() {
-        $(damageDisplayContainer).empty();
+        // Handle collapsing/expanding window
+        $(damageDisplayCollapseButton).click(function() {
+            if ($(damageDisplayContainer).css("display") === "block") {
+                $(damageDisplayContainer).css("display", "none");
+                $(damageDisplayCollapseButton).addClass(COLLAPSE_BUTTON_COLLAPSED_CLASSNAME);
+            } else {
+                $(damageDisplayCollapseButton).removeClass(COLLAPSE_BUTTON_COLLAPSED_CLASSNAME);
+                $(damageDisplayContainer).css("display", "block");
+            }
+        });
     }
 
     return {

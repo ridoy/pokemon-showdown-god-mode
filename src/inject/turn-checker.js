@@ -1,6 +1,6 @@
 // Orchestrates damage calculation updates by tracking turn number in active games
 function TurnChecker(newDataWindow) {
-    let gamesToNumTurns = {};
+    let gameToTurnNumberMap = {};
     let activeGameId = null;
     let firstBattleWasInitiated = false;
     let dataWindow = newDataWindow;
@@ -22,12 +22,12 @@ function TurnChecker(newDataWindow) {
         }
         // If new game was added since we last checked, add it to our watchlist
         for (let room of app.roomList) {
-            if (!gamesToNumTurns[room.id]) gamesToNumTurns[room.id] = 0;
+            if (!gameToTurnNumberMap[room.id]) gameToTurnNumberMap[room.id] = 0;
         }
         // TODO removing games
         // If new turn has happened, recalculate damage ranges
-        if (app.curRoom.battle.turn > gamesToNumTurns[app.curRoom.battle.id]) {
-            gamesToNumTurns[app.curRoom.battle.id] = app.curRoom.battle.turn;
+        if (app.curRoom.battle.turn > gameToTurnNumberMap[app.curRoom.battle.id]) {
+            gameToTurnNumberMap[app.curRoom.battle.id] = app.curRoom.battle.turn;
             dataWindow.refresh();
         }
     }

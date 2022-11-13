@@ -30,7 +30,7 @@ function DamageCalculator() {
     // @return {Pokemon} Pokemon object.
     function initPokemon(gen, dex, pkmn) {
         try {
-            let name = (pkmn.speciesForme === 'Floette-Eternal') ? 'Floette' : dex.species.get(pkmn.speciesForme).id;
+            let name = (pkmn.speciesForme === 'Floette-Eternal') ? 'Floette' : dex.species.get(pkmn.speciesForme).name;
             return new calc.Pokemon(gen, name, {
                 item: dex.items.get(pkmn.item).name,
                 ability: dex.items.get(pkmn.ability).name,
