@@ -118,7 +118,7 @@ function DataWindow(newDamageCalculator) {
                     ${(isMaxDamage && !isFainted) ? '</b>' : ''}`
             }
             let damageDisplayItemClassName = `${DAMAGE_DISPLAY_ITEM_CLASSNAME} ${className}`;
-            damageDisplayItemClassName += (isFainted) ? DAMAGE_DISPLAY_ITEM_FAINTED_CLASSNAME : '';
+            damageDisplayItemClassName += (isFainted) ? ' ' + DAMAGE_DISPLAY_ITEM_FAINTED_CLASSNAME : '';
             let damageDisplayItem = $("<div/>", {
                 "class": damageDisplayItemClassName
             }).html(thisPkmnDamagesString).appendTo(parentElement);
