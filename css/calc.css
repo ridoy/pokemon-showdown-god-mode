@@ -1,0 +1,226 @@
+/* Pokémon Showdown God Mode — damage calc panel.
+   The wrap mirrors the battle log's on-screen box; the toggle button floats at
+   its top-right corner. */
+
+.godmode-toggle {
+  position: fixed;
+  z-index: 100000;
+  width: 50px;
+  height: 22px;
+  padding: 0;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  border: 1px solid #5a6f8c;
+  border-radius: 4px;
+  background: #4a6fa5;
+  color: #fff;
+  display: none;
+}
+.godmode-toggle:hover {
+  background: #3a5d92;
+}
+
+.godmode-wrap {
+  position: fixed;
+  z-index: 99999;
+  display: none;
+  overflow: auto;
+  background: #f8f9fb;
+  border: 1px solid #adb6c2;
+  box-sizing: border-box;
+}
+
+.godmode-calc {
+  font-family: Verdana, Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  color: #11243a;
+  padding: 8px 8px 14px;
+}
+
+.gm-empty {
+  padding: 24px 12px;
+  color: #777;
+  text-align: center;
+}
+
+/* Field row */
+.gm-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 4px 2px 8px;
+  border-bottom: 1px solid #d3d9e2;
+  margin-bottom: 8px;
+}
+.gm-field-label {
+  font-weight: bold;
+}
+.gm-screen {
+  white-space: nowrap;
+}
+.gm-weather {
+  font-size: 11px;
+}
+
+/* Two columns + swap */
+.gm-cols {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.gm-col {
+  flex: 1 1 0;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #d3d9e2;
+  border-radius: 5px;
+  padding: 6px;
+}
+.gm-swap {
+  align-self: center;
+  cursor: pointer;
+  border: 1px solid #adb6c2;
+  background: #eef1f6;
+  border-radius: 4px;
+  font-size: 14px;
+  padding: 2px 6px;
+}
+.gm-swap:hover {
+  background: #dde3ee;
+}
+
+.gm-heading {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gm-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.gm-lbl {
+  flex: 0 0 34px;
+  color: #56657a;
+}
+.gm-inline {
+  display: flex;
+  gap: 6px;
+}
+.gm-half {
+  flex: 1 1 0;
+}
+.gm-input {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 11px;
+  padding: 1px 3px;
+  border: 1px solid #c3cad6;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+.gm-num {
+  width: 100%;
+  font-size: 11px;
+  padding: 1px 2px;
+  border: 1px solid #c3cad6;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+.gm-section-lbl {
+  font-weight: bold;
+  color: #56657a;
+  margin: 6px 0 2px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gm-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 3px;
+}
+.gm-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 9px;
+  color: #56657a;
+}
+.gm-stat span {
+  margin-bottom: 1px;
+}
+
+.gm-moves {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+.gm-move {
+  width: 100%;
+}
+.gm-revealed {
+  background: #fff6d6;
+  font-weight: bold;
+}
+
+/* Results */
+.gm-results {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gm-dir {
+  flex: 1 1 45%;
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid #d3d9e2;
+  border-radius: 5px;
+  padding: 6px;
+}
+.gm-dir-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+.gm-result-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 0;
+  border-top: 1px solid #eef0f4;
+}
+.gm-move-name {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gm-dmg {
+  font-variant-numeric: tabular-nums;
+  font-weight: bold;
+}
+.gm-status {
+  color: #999;
+  font-weight: normal;
+}
+.gm-ko {
+  flex: 0 0 100%;
+  font-size: 10px;
+  color: #8a5a00;
+  padding-left: 2px;
+}
+.gm-err {
+  opacity: 0.55;
+}

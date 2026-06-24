@@ -1,8 +1,8 @@
 {
-  "name": "Pokemon Showdown God Mode",
-  "version": "0.0.1",
-  "manifest_version": 2,
-  "description": "Pokemon Showdown God Mode",
+  "name": "Pokémon Showdown God Mode",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "description": "Embeds an interactive Gen 3 damage calculator into the Pokémon Showdown battle UI.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -11,27 +11,11 @@
   "default_locale": "en",
   "content_scripts": [
     {
-      "matches": [
-        "https://play.pokemonshowdown.com/*"
-      ],
-      "css": [
-        "css/style.css"
-      ],
-      "js": [
-        "js/jquery-2.1.4.min.js",
-        "src/inject/calc/calc.js",
-        "src/inject/data/gen1formatsdata.js",
-        "src/inject/data/gen2formatsdata.js",
-        "src/inject/data/gen3formatsdata.js",
-        "src/inject/data/gen4formatsdata.js",
-        "src/inject/data/gen5formatsdata.js",
-        "src/inject/data/gen6formatsdata.js",
-        "src/inject/data/gen7formatsdata.js",
-        "src/inject/window.js",
-        "src/inject/damage-calculator.js",
-        "src/inject/turn-checker.js",
-        "src/inject/main.js"
-      ]
+      "matches": ["https://play.pokemonshowdown.com/*"],
+      "js": ["dist/bundle.js"],
+      "css": ["css/calc.css"],
+      "world": "MAIN",
+      "run_at": "document_idle"
     }
   ]
 }
