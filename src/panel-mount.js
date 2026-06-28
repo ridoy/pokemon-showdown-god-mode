@@ -11,7 +11,6 @@ export class PanelMount {
     this.showCalc = false;
     this.lastSig = null;
     this.curLog = null;
-    this.hiddenLog = null;
     this._mounted = false;
 
     this.toggleBtn = document.createElement("button");
@@ -69,7 +68,9 @@ export class PanelMount {
       this.panel.sync(readSnapshot());
     }
 
-    this.toggleBtn.style.display = "";
+    // Must be an explicit value: setting `""` falls back to the stylesheet's
+    // `.godmode-toggle { display: none }` and the button would stay hidden.
+    this.toggleBtn.style.display = "block";
     this._applyVisibility();
   }
 
@@ -79,8 +80,10 @@ export class PanelMount {
     this.wrap.style.left = rect.left + "px";
     this.wrap.style.width = rect.width + "px";
     this.wrap.style.height = rect.height + "px";
+    // Sit in the empty left side of the log's options bar (the "Battle Options"
+    // button is right-aligned, so this avoids overlapping it).
     this.toggleBtn.style.top = rect.top + 4 + "px";
-    this.toggleBtn.style.left = rect.right - 58 + "px";
+    this.toggleBtn.style.left = rect.left + 6 + "px";
   }
 
   _toggle() {
@@ -88,23 +91,15 @@ export class PanelMount {
     this._applyVisibility();
   }
 
+  // The panel is an opaque overlay on top of the log (we never hide the log
+  // itself — doing so made the poll think the battle ended and caused flashing).
   _applyVisibility() {
     if (this.showCalc && this.curLog) {
       this.wrap.style.display = "block";
-      this.curLog.style.display = "none";
-      this.hiddenLog = this.curLog;
-      this.toggleBtn.textContent = "Chat";
+      this.toggleBtn.textContent = "Log";
     } else {
       this.wrap.style.display = "none";
-      this._restoreLog();
       this.toggleBtn.textContent = "Calc";
-    }
-  }
-
-  _restoreLog() {
-    if (this.hiddenLog) {
-      this.hiddenLog.style.display = "";
-      this.hiddenLog = null;
     }
   }
 
@@ -113,6 +108,5 @@ export class PanelMount {
     this.lastSig = null;
     this.toggleBtn.style.display = "none";
     this.wrap.style.display = "none";
-    this._restoreLog();
   }
 }
